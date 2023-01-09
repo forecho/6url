@@ -22,22 +22,16 @@
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20211023jMOM3s.jpg"
       },
       {
+        "title": "雪盈证券",
+        "description": "国内最大投资者社区雪球旗下美港股券商",
+        "url": "http://link.3li3.com/xueying",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20210428oViYVo.jpg"
+      },
+      {
         "title": "涨乐全球通",
         "description": "涨乐全球通隶属于华泰国际，由香港证监会认可的持牌机构。",
         "url": "http://link.3li3.com/huatai",
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20220319kTtijH.jpg"
-      },
-      {
-        "title": "币安",
-        "description": "最大的数字货币交易平台",
-        "url": "http://link.3li3.com/bian",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109wAp38J.jpg"
-      },
-      {
-        "title": "欧易",
-        "description": "全球著名的数字资产交易平台之一",
-        "url": "http://link.3li3.com/okxx",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/202301091HpzDx.jpg"
       }
     ]
   },
@@ -46,10 +40,10 @@
     "icon": "https://afterwork-design.github.io/castalia/images/menu/illustration.svg",
     "site": [
       {
-        "title": "金十数据",
-        "description": "致力于成为国内专业的财经新闻软件和交易工具",
-        "url": "https://www.jin10.com/",
-        "logo": "https://play-lh.googleusercontent.com/Q8aLp4S6Wx18QdD8NVVecmSUhh0hDXzWKARvohIT9YEPWrHyq6pjDc7osnLtEzEsOw=w480-h960-rw"
+        "title": "华尔街日报",
+        "description": "美国最受信任的报纸，获得可信赖的见解和深入分析",
+        "url": "https://cn.wsj.com/",
+        "logo": "https://play-lh.googleusercontent.com/eksxaPfxbTVb6VTl5aj1sXLpKc_N9Z6AZ3_5Oq6JhTXmgEQza-1v58a66p_ID0phE2Zv=w240-h480-rw"
       },
       {
         "title": "美港电讯",
@@ -58,34 +52,16 @@
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109wWFv1G.jpg"
       },
       {
-        "title": "Gurufocus",
-        "description": "致力于给研究股票基本面的长期投资者提供最可靠方便的分析工具和数据",
-        "url": "https://www.gurufocus.cn/refer?refer_code=GPJN53",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109BE7lgj.jpg"
-      },
-      {
-        "title": "OpenInsider",
-        "description": "SEC Form 4 内幕交易筛选器。",
-        "url": "http://openinsider.com/",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109b2KOKt.png"
-      },
-      {
-        "title": "Simply Wallst",
-        "description": "一家股票投资平台，提供的个性化数据库和工具包",
-        "url": "https://simplywall.st/",
-        "logo": "https://play-lh.googleusercontent.com/2yRELZhVpGmtLqhneW9hbMxzCspeVgyvoNeM3aZLelr4warNY5LfPwKce6NAiIiEx4Ak=w480-h960-rw"
-      },
-      {
         "title": "Seeking Alpha",
         "description": "最早了解市场动态新闻和您所关注股票的分析",
         "url": "https://seekingalpha.com/",
         "logo": "https://play-lh.googleusercontent.com/p0p-Jx5Ub5orrUcdFmTGqH2JYAWuTn5ARvxgBkJWluQl8SlScmnapUMb24hdzyVivvs=w480-h960-rw"
       },
       {
-        "title": "Tipranks",
-        "description": "一家来自以色列专门为分析师做排名的公司",
-        "url": "https://www.tipranks.com/",
-        "logo": "https://play-lh.googleusercontent.com/FJZxKv_olUH2CNQmyo4ECkLgu8I7U_otB91iqdDBWxR3YzjePQkNU8gdRqI1vpWpEgg=w480-h960-rw"
+        "title": "TradingView",
+        "description": "一个价格图表和分析软件",
+        "url": "https://cn.tradingview.com/gopro/?share_your_love=caizhenghai",
+        "logo": "https://play-lh.googleusercontent.com/Mz83heom_8jnRplnSDxZFJ3WMz7EpMARiMZPkKTHpWF2HAh9DZTJFphjLTSWxfTa_g=w240-h480-rw"
       },
       {
         "title": "Finviz",
@@ -106,316 +82,125 @@
     "icon": "https://afterwork-design.github.io/castalia/images/menu/color.svg",
     "site": [
       {
-        "title": "ColorDrop",
-        "description": "每组 4 种颜色",
-        "url": "https://colordrop.io",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/colordrop.png"
+        "title": "OptionStrat",
+        "description": "期权交易者的工具包",
+        "url": "https://optionstrat.com/flow/live?ref=caizhenghai",
+        "logo": "https://play-lh.googleusercontent.com/BH_IksChjshYRdiBWBYlEjfhtNL2_QSP9gR1ZCLv-NKwgCrKJwKLbUUE-FP43U65Ng=w240-h480-rw"
       },
       {
-        "title": "中国色",
-        "description": "中国传统色",
-        "url": "http://zhongguose.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/zhonguose.jpg"
+        "title": "Barchart",
+        "description": "免费提供一个异常期权活动的页面",
+        "url": "https://www.barchart.com/options/unusual-activity/stocks",
+        "logo": "https://play-lh.googleusercontent.com/uyfM1fP9AuRhMnXm-_B4KKUVmBLW1ay5pnIehcmt_HK4oYSF70xcfwPVbFHeN1ctJ9E=w240-h480-rw"
       },
       {
-        "title": "Nippon Colors",
-        "description": "日本传统色",
-        "url": "https://nipponcolors.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/nippon-colors.jpg"
+        "title": "Unusual Whales",
+        "description": "最完整的期权交易流跟踪平台",
+        "url": "https://unusualwhales.com/referral#fc371ea7-454f-496f-8504-8b69f8edb0ef",
+        "logo": "https://play-lh.googleusercontent.com/9PPOeyCUOteezecLRNyw04piJAy77X2uvhjSMG33M33Q1xh650TDq7ppU4u6altbkhQ=w240-h480-rw"
       },
       {
-        "title": "WebGradients",
-        "description": "优美的渐变色",
-        "url": "https://webgradients.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/webgradients.jpg"
+        "title": "Tradytics",
+        "description": "利用人工智能和数据分析来获取信息",
+        "url": "https://tradytics.com/?ref_link=9rsArQ7FcjkaZMzZVGcbNlPZvaHOxkO3ehBleRJmUyIzpp6V_caizhenghai",
+        "logo": "https://play-lh.googleusercontent.com/dws3xAJrotzOOFDSuToCmn8HgI2fVMfDcNP31fB63FSw8calHmJ8HkGqcUIQ7lqNjQ=w240-h480-rw"
       },
       {
-        "title": "Color Claim",
-        "description": "颜值很高的色彩网站",
-        "url": "https://vanschneider.com/colors",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/color-claim.jpg"
+        "title": "Options profit calculator",
+        "description": "免费的股票期权利润计算工具",
+        "url": "https://www.optionsprofitcalculator.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109PU7ttn.jpg"
       },
       {
-        "title": "Picular",
-        "description": "可通过关键词搜索对应配色",
-        "url": "https://picular.co/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/picular.png"
-      },
-      {
-        "title": "Grabient",
-        "description": "渐变色网站，支持在每组渐变色上调节色值、颜色位置、渐变角度和添加颜色",
-        "url": "https://www.grabient.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/grabient.png"
-      },
-      {
-        "title": "CoolHue",
-        "description": "漂亮的渐变色网站",
-        "url": "https://webkul.github.io/coolhue/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/coolhue.png"
-      },
-      {
-        "title": "ColorSpace",
-        "description": "功能强大的配色网站，输入一个颜色，自动生成不同应用场景的配色",
-        "url": "https://mycolor.space/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/colorspace.png"
-      },
-      {
-        "title": "BrandColors",
-        "description": "各大公司品牌色",
-        "url": "https://brandcolors.net/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/brandcolors.png"
-      },
-      {
-        "title": "Mesh Gradients",
-        "description": "不规则渐变",
-        "url": "https://products.ls.graphics/mesh-gradients/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/mesh-gradients.png"
-      },
-      {
-        "title": "Flatcolorpicker",
-        "description": "按色系分类的颜色，支持多种色彩模式",
-        "url": "https://www.flatuicolorpicker.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/flatuicolorpicker.png"
-      },
-      {
-        "title": "Open Color",
-        "description": "13 个色系，每种色系分 10 个明度",
-        "url": "https://yeun.github.io/open-color/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/opencolor.png"
-      },
-      {
-        "title": "ColorBox",
-        "description": "自动生成色彩梯度",
-        "url": "https://colorbox.io/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/colorbox.png"
-      },
-      {
-        "title": "Color Leap",
-        "description": "复古配色网站",
-        "url": "https://colorleap.app/home",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/colorleap.png"
-      },
-      {
-        "title": "KaKa",
-        "description": "四色色板、渐变色、阶梯色",
-        "url": "https://afterwork-design.github.io/color-card/",
-        "logo": "https://afterwork-design.github.io/color-card/logo1.png"
+        "title": "Twitter 期权列表",
+        "description": "由本人创建的期权 Twitter 列表",
+        "url": "https://twitter.com/i/lists/1606299260877955072",
+        "logo": "https://play-lh.googleusercontent.com/1byNc8Mr2o1gV5Qd_42xF5y_RjTVUFhW_fKF8SMPfYbYoiAhSteBckNKwEU28hj0lXc=s48-rw"
       }
-    ]
-  },
-  {
-    "title": "图片视频",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/picture.svg",
-    "site": [
-      {
-        "title": "Unsplash",
-        "description": "免费，由世界各地创作者提供的高质量图片",
-        "url": "https://unsplash.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/unsplash.jpg"
-      },
-      {
-        "title": "Pexels",
-        "description": "免费，包括图片和视频",
-        "url": "https://www.pexels.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/pexels.jpg"
-      },
-      {
-        "title": "Pixabay",
-        "description": "免费，超过 250 万张高质量的作品，包括图片、视频和音乐",
-        "url": "https://pixabay.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/pixabay.jpg"
-      },
-      {
-        "title": "SplitShire",
-        "description": "免费，精美独特的图片库",
-        "url": "https://www.splitshire.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/splitshire.jpg"
-      },
-      {
-        "title": "StolSnap",
-        "description": "免费，每天都更新图片",
-        "url": "https://stocksnap.io",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/stocksnap.jpg"
-      },
-      {
-        "title": "IMGBIN",
-        "description": "免费，由设计师创建的数百万个透明 PNG 文件",
-        "url": "https://imgbin.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/imgbin.jpg"
-      },
-      {
-        "title": "Hippopx",
-        "description": "免费，各种摄影作品",
-        "url": "https://www.hippopx.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/hippopx.jpg"
-      },
-      {
-        "title": "RESHOT",
-        "description": "免费图标、插图和照片，可商用",
-        "url": "https://www.reshot.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/reshot.png"
-      },
-      {
-        "title": "POND5",
-        "description": "公共领域，有图片，音乐，模型等数千个历史媒体文件",
-        "url": "https://www.pond5.com/public-domain",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/pond5.png"
-      },
-      {
-        "title": "Streetwill",
-        "description": "免费高质量优质图片",
-        "url": "http://streetwill.co",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/streetwill.png"
-      },
-      {
-        "title": "ISO",
-        "description": "数以千计的免费高分辨率 Stock CC0 图片和视频",
-        "url": "https://isorepublic.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/iso.png"
-      },
-      {
-        "title": "PR 模板网",
-        "description": "Premiere 模板素材等资源下载网站",
-        "url": "https://prmuban.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/premiere.png"
-      }
-    ]
-  },
-  {
-    "title": "阅读",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/book.svg",
-    "site": [
-      {
-        "title": "Medium",
-        "description": "国外的优质博客平台",
-        "url": "https://medium.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/medium.jpg"
-      },
-      {
-        "title": "SaltTiger",
-        "description": "每天一本编程书，每天进步一点点",
-        "url": "https://salttiger.com",
-        "logo": "https://afterwork-design.github.io/castalia/castalia-s.png"
-      },
-      {
-        "title": "微信读书",
-        "description": "支持多平台的免费读书软件",
-        "url": "https://weread.qq.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/weread.png"
-      },
-      {
-        "title": "NN Group",
-        "description": "传播专业的用户体验知识",
-        "url": "https://www.nngroup.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/nng.jpg"
-      },
-      {
-        "title": "Sidebar",
-        "description": "每日更新最佳设计链接",
-        "url": "https://sidebar.io",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/sidebar.png"
-      },
-      {
-        "title": "Panda",
-        "description": "资讯合集",
-        "url": "https://app.usepanda.com/#/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/panda.png"
-      }
+      
     ]
   },
   {
     "title": "工具",
+    "icon": "https://afterwork-design.github.io/castalia/images/menu/picture.svg",
+    "site": [
+      {
+        "title": "OpenInsider",
+        "description": "SEC Form 4 内幕交易筛选器。",
+        "url": "http://openinsider.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109b2KOKt.png"
+      },
+      {
+        "title": "Gurufocus",
+        "description": "致力于给研究股票基本面的长期投资者提供最可靠方便的分析工具和数据",
+        "url": "https://www.gurufocus.cn/refer?refer_code=GPJN53",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109BE7lgj.jpg"
+      },
+      {
+        "title": "Tipranks",
+        "description": "一家来自以色列专门为分析师做排名的公司",
+        "url": "https://www.tipranks.com/",
+        "logo": "https://play-lh.googleusercontent.com/FJZxKv_olUH2CNQmyo4ECkLgu8I7U_otB91iqdDBWxR3YzjePQkNU8gdRqI1vpWpEgg=w480-h960-rw"
+      },
+      {
+        "title": "Simply Wallst",
+        "description": "一家股票投资平台，提供的个性化数据库和工具包",
+        "url": "https://simplywall.st/",
+        "logo": "https://play-lh.googleusercontent.com/2yRELZhVpGmtLqhneW9hbMxzCspeVgyvoNeM3aZLelr4warNY5LfPwKce6NAiIiEx4Ak=w480-h960-rw"
+      },
+      {
+        "title": "CompaniesMarketCap",
+        "description": "按市值排名的公司",
+        "url": "https://companiesmarketcap.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109I2Wgm3.jpg"
+      },
+      {
+        "title": "Valuesider",
+        "description": "找到著名价值投资者持有的投资组合",
+        "url": "https://valuesider.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109d5qcRI.jpg"
+      }
+    ]
+  },
+  {
+    "title": "WEB3",
     "icon": "https://afterwork-design.github.io/castalia/images/menu/tool.svg",
     "site": [
       {
-        "title": "TinyPNG",
-        "description": "高质量图片压缩网站",
-        "url": "https://tinypng.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/tinypng.jpg"
+        "title": "币安",
+        "description": "最大的数字货币交易平台",
+        "url": "http://link.3li3.com/bian",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109wAp38J.jpg"
       },
       {
-        "title": "docsmall",
-        "description": "在线免费图片、PDF 压缩工具",
-        "url": "https://docsmall.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/docsmall.jpg"
+        "title": "欧易",
+        "description": "全球著名的数字资产交易平台之一",
+        "url": "http://link.3li3.com/okxx",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/202301091HpzDx.jpg"
       },
       {
-        "title": "Canva",
-        "description": "提供优质模板，快速制作各种封面",
-        "url": "https://www.canva.cn",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/canva.jpg"
+        "title": "OpenSea",
+        "description": "探索、收藏和销售 NFT",
+        "url": "https://opensea.io/",
+        "logo": "https://play-lh.googleusercontent.com/32y5iFC7fULhuCqR8YfQSwtensqoVxBVbPDgTZOypQu3i-g5C7Tk-SBdgVcFh5Ako88=w240-h480-rw"
       },
       {
-        "title": "Polarr",
-        "description": "功能强大的修图工具",
-        "url": "https://photoeditor.polarr.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/polarr.jpg"
+        "title": "CoinGecko",
+        "description": "提供比特币与数字货币、追踪器、投资组合、新闻",
+        "url": "https://www.coingecko.com/",
+        "logo": "https://play-lh.googleusercontent.com/N5OgI6csCfK3406xnALhhHzRjAgkkIONqADelDg_b8Ih9JxG3ipz3Vbg0rDlUSBQSw=w240-h480-rw"
       },
       {
-        "title": "Contrast Ratio",
-        "description": "轻松计算色彩对比度，帮助通过 WCAG",
-        "url": "https://contrast-ratio.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/contrast-ratio.jpg"
+        "title": "Mirror",
+        "description": "一个去中心化的基于区块链技术的加密发布平台",
+        "url": "https://mirror.xyz/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109tZ7OKo.jpg"
       },
       {
-        "title": "WeaveSilk",
-        "description": "在线制作酷炫背景",
-        "url": "http://weavesilk.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/weavesilk.jpg"
-      },
-      {
-        "title": "CodePen",
-        "description": "在线代码编辑器和学习环境，包含许多 Web 设计相关资源",
-        "url": "https://codepen.io",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/codepen.png"
-      },
-      {
-        "title": "即时设计",
-        "description": "可实时协作的专业 UI 设计工具",
-        "url": "https://js.design",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/js-design.png"
-      },
-      {
-        "title": "中国地图矢量图",
-        "description": "支持多种数据格式，包括 json、svg 等，区域最小可拆分至区县",
-        "url": "https://datav.aliyun.com/portal/school/atlas/area_selector",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/datav.png"
-      },
-      {
-        "title": "Excalidraw",
-        "description": "手绘风格的在线白板工具",
-        "url": "https://excalidraw.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/excalidraw.png"
-      },
-      {
-        "title": "Magic Eraser",
-        "description": "快速消除图片中杂物的在线工具",
-        "url": "https://www.magiceraser.io/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/magiceraser.png"
-      },
-      {
-        "title": "Screen Guru",
-        "description": "在线截图美化工具，输入 URL, 生成干净的浏览器模型",
-        "url": "https://screen.guru",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/screen-guru.png"
-      },
-      {
-        "title": "FabPic",
-        "description": "在线截图美化工具",
-        "url": "https://www.fabpic.app",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/fabpic.png"
-      },
-      {
-        "title": "Screenzy",
-        "description": "在线截图美化工具，支持 URL、本地图片和随机的 Unsplash 图片",
-        "url": "https://screenzy.io/#",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/screenzy.png"
-      },
-      {
-        "title": "Screely",
-        "description": "将截图生成浏览器模型",
-        "url": "https://www.screely.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/screely.png"
+        "title": "Uniswap",
+        "description": "一个用来在以太坊区块链上交易加密货币（ERC-20 代币）的点对合约系统",
+        "url": "https://uniswap.org/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109G3tRSQ.jpg"
       }
     ]
   },
@@ -482,150 +267,6 @@
         "description": "在线词源词典",
         "url": "https://www.etymonline.com",
         "logo": "https://afterwork-design.github.io/castalia/images/site/etymonline.png"
-      }
-    ]
-  },
-  {
-    "title": "网页设计",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/web-design.svg",
-    "site": [
-      {
-        "title": "Glassmorphism Generator",
-        "description": "在线调节生成磨砂玻璃效果，可直接复制 CSS",
-        "url": "https://hype4.academy/tools/glassmorphism-generator",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/glassmorphism.png"
-      },
-      {
-        "title": "Neumorphism",
-        "description": "在线调节生成新拟态效果，自动生成 CSS",
-        "url": "https://neumorphism.io/#e0e0e0",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/neumorphism.png"
-      },
-      {
-        "title": "Animate CSS",
-        "description": "一个开源的 css 动画库",
-        "url": "https://animate.style/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/animate-css.jpg"
-      },
-      {
-        "title": "Uiverse",
-        "description": "按钮样式库，也包含复选框、开关、卡片等样式",
-        "url": "https://uiverse.io/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/uiverse.jpg"
-      },
-      {
-        "title": "useAnimations",
-        "description": "图标按钮动效",
-        "url": "https://useanimations.com/index.html#explore",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/useanimations.png"
-      }
-    ]
-  },
-  {
-    "title": "个人网站",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/personal-website.svg",
-    "site": [
-      {
-        "title": "Itsacat",
-        "description": "葡萄牙插画师，擅长处理图形和色彩，制作有趣动画",
-        "url": "https://itsacatstudio.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/itsacats.jpg"
-      },
-      {
-        "title": "Pengfei Wang",
-        "description": "程序员",
-        "url": "https://pengfeixc.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/pengfeiw.jpg"
-      },
-      {
-        "title": "Alice Lee",
-        "description": "独立插画师",
-        "url": "https://www.byalicelee.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/alice-lee.jpg"
-      },
-      {
-        "title": "Chloe Takahashi",
-        "description": "日本插画师",
-        "url": "https://chloetakahashi.net",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/chloe-takahashi.jpg"
-      },
-      {
-        "title": "Tang Weijuan",
-        "description": "设计师",
-        "url": "https://tangweijuan.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/tangweijuan.jpg"
-      }
-    ]
-  },
-  {
-    "title": "Mockup",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/mockup.svg",
-    "site": [
-      {
-        "title": "c.mockup",
-        "description": "用于场景创建的模型系统",
-        "url": "https://mockup.ceacle.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/cmockup.jpg"
-      },
-      {
-        "title": "MockuPhone",
-        "description": "免费，在线生成纯白背景模型效果",
-        "url": "https://mockuphone.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/mockuphone.jpg"
-      },
-      {
-        "title": "Mockups Design",
-        "description": "免费，优质模型下载",
-        "url": "https://mockups-design.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/mockups-design.jpg"
-      }
-    ]
-  },
-  {
-    "title": "设计体系",
-    "icon": "https://afterwork-design.github.io/castalia/images/menu/design-system.svg",
-    "site": [
-      {
-        "title": "Ant Design",
-        "description": "企业级产品设计体系",
-        "url": "https://ant.design/index-cn",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/ant-design.jpg"
-      },
-      {
-        "title": "Element Plus",
-        "description": "基于 Vue 3, 面向设计师和开发者的组件库",
-        "url": "https://element-plus.org/zh-CN",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/element-plus.jpg"
-      },
-      {
-        "title": "Figma Design Systems",
-        "description": "Figma 设计体系",
-        "url": "https://www.designsystems.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/figma-design-systems.jpg"
-      },
-      {
-        "title": "Material Design",
-        "description": "谷歌设计规范",
-        "url": "https://material.io/design",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/material-design.jpg"
-      },
-      {
-        "title": "Fluent Design System",
-        "description": "微软设计规范",
-        "url": "https://www.microsoft.com/design/fluent/#",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/fluent.jpg"
-      },
-      {
-        "title": "Apple Developer",
-        "description": "苹果设计规范",
-        "url": "https://developer.apple.com/design/human-interface-guidelines",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/apple.jpg"
-      },
-      {
-        "title": "HarmonyOS",
-        "description": "鸿蒙设计规范",
-        "url": "https://developer.harmonyos.com/cn/design",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/harmonyos.jpg"
       }
     ]
   }
