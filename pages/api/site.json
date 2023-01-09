@@ -1,14 +1,14 @@
 {
   "logo": "",
-  "keywords": "设计师，资源导航",
+  "keywords": "美股",
   "favicon": "https://afterwork-design.github.io/castalia/castalia-s.png",
   "seo": {
-    "title": "Cherries",
-    "description": "最全的网站资源"
+    "title": "6URL",
+    "description": "寻找交易机会"
   },
   "banner": {
-    "title": "一个资源导航网站",
-    "subtitle": "精选国内外优质网站， 让每个人都能找到自己需要的资源"
+    "title": "寻找投资机会",
+    "subtitle": "投资是一生的旅程。你必须接受你不会一夜暴富。你必须学会​​生存。"
   },
   "navItems": [
     {

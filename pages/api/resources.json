@@ -1,119 +1,113 @@
 [
   {
-    "title": "Icon",
+    "title": "券商",
     "icon": "https://afterwork-design.github.io/castalia/images/menu/icon.svg",
     "site": [
       {
-        "title": "IconPark",
-        "description": "免费，规范、统一、多风格切换",
-        "url": "https://iconpark.oceanengine.com/home",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/iconpark.jpg"
+        "title": "盈立智投",
+        "description": "境外投资新一代专业智能投资平台",
+        "url": "http://link.3li3.com/yxzq",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/202104280RDvTX.jpg"
       },
       {
-        "title": "Iconfont",
-        "description": "免费，中文，图标数量丰富，包含插画资源",
-        "url": "https://www.iconfont.cn",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/iconfont.png"
+        "title": "华盛通证券",
+        "description": "由新浪战略投资的香港证券公司，专业的股票交易软件",
+        "url": "http://link.3li3.com/hstong",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20220829OJVEmb.jpg"
       },
       {
-        "title": "Ikonate",
-        "description": "免费，样式统一，可调大小、粗细、颜色等参数",
-        "url": "https://ikonate.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/ikonate.jpg"
+        "title": "长桥证券",
+        "description": "互联网人的一站式全球资产配置平台",
+        "url": "http://link.3li3.com/qiao",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20211023jMOM3s.jpg"
       },
       {
-        "title": "Remix Icon",
-        "description": "免费，精致统一的开源图标",
-        "url": "https://remixicon.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/remix.jpg"
+        "title": "涨乐全球通",
+        "description": "涨乐全球通隶属于华泰国际，由香港证监会认可的持牌机构。",
+        "url": "http://link.3li3.com/huatai",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20220319kTtijH.jpg"
       },
       {
-        "title": "Iconscout",
-        "description": "精美丰富，包含很多冷门类型",
-        "url": "https://iconscout.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/iconscout.jpg"
+        "title": "币安",
+        "description": "最大的数字货币交易平台",
+        "url": "http://link.3li3.com/bian",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109wAp38J.jpg"
       },
       {
-        "title": "ICONS8",
-        "description": "多风格",
-        "url": "https://icons8.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/icons8.jpg"
-      },
-      {
-        "title": "ICONFINDER",
-        "description": "类型丰富的图标库",
-        "url": "https://www.iconfinder.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/iconfinder.jpg"
-      },
-      {
-        "title": "Emoji XD",
-        "description": "线上Emoji百科全书，支持关键词搜索",
-        "url": "https://emojixd.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/emojixd.jpg"
-      },
-      {
-        "title": "seeklogo",
-        "description": "500000+ 个品牌 logo 图片，包含 png 和矢量格式",
-        "url": "https://seeklogo.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/seeklogo.png"
+        "title": "欧易",
+        "description": "全球著名的数字资产交易平台之一",
+        "url": "http://link.3li3.com/okxx",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/202301091HpzDx.jpg"
       }
     ]
   },
   {
-    "title": "插画",
+    "title": "资讯",
     "icon": "https://afterwork-design.github.io/castalia/images/menu/illustration.svg",
     "site": [
       {
-        "title": "unDraw",
-        "description": "免费，矢量插画，可在线调节颜色",
-        "url": "https://undraw.co/illustrations",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/undraw.jpg"
+        "title": "金十数据",
+        "description": "致力于成为国内专业的财经新闻软件和交易工具",
+        "url": "https://www.jin10.com/",
+        "logo": "https://play-lh.googleusercontent.com/Q8aLp4S6Wx18QdD8NVVecmSUhh0hDXzWKARvohIT9YEPWrHyq6pjDc7osnLtEzEsOw=w480-h960-rw"
       },
       {
-        "title": "Blush",
-        "description": "色彩鲜明的插画，有 figma 和 sketch 插件",
-        "url": "https://blush.design/zh-CN",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/blush.jpg"
+        "title": "美港电讯",
+        "description": "金十数据网美港股频道，实时提供美港股市场资讯",
+        "url": "https://www.ushknews.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109wWFv1G.jpg"
       },
       {
-        "title": "Free Illustrations",
-        "description": "免费高质量矢量插画资源",
-        "url": "https://sketchvalley.com/",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/sv.jpg"
+        "title": "Gurufocus",
+        "description": "致力于给研究股票基本面的长期投资者提供最可靠方便的分析工具和数据",
+        "url": "https://www.gurufocus.cn/refer?refer_code=GPJN53",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109BE7lgj.jpg"
       },
       {
-        "title": "Illustrationx",
-        "description": "国外的插画平台，世界各地插画师的作品",
-        "url": "https://www.illustrationx.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/illustrationx.jpg"
+        "title": "OpenInsider",
+        "description": "SEC Form 4 内幕交易筛选器。",
+        "url": "http://openinsider.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109b2KOKt.png"
       },
       {
-        "title": "Folio",
-        "description": "插画机构，包含从崭露头角的艺术家到行业偶像的作品",
-        "url": "https://folioart.co.uk",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/folioart.jpg"
+        "title": "Simply Wallst",
+        "description": "一家股票投资平台，提供的个性化数据库和工具包",
+        "url": "https://simplywall.st/",
+        "logo": "https://play-lh.googleusercontent.com/2yRELZhVpGmtLqhneW9hbMxzCspeVgyvoNeM3aZLelr4warNY5LfPwKce6NAiIiEx4Ak=w480-h960-rw"
       },
       {
-        "title": "涂鸦王国",
-        "description": "国内插画平台",
-        "url": "https://www.gracg.com",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/gracg.jpg"
+        "title": "Seeking Alpha",
+        "description": "最早了解市场动态新闻和您所关注股票的分析",
+        "url": "https://seekingalpha.com/",
+        "logo": "https://play-lh.googleusercontent.com/p0p-Jx5Ub5orrUcdFmTGqH2JYAWuTn5ARvxgBkJWluQl8SlScmnapUMb24hdzyVivvs=w480-h960-rw"
       },
       {
-        "title": "404 Illustrations",
-        "description": "有趣的404插画",
-        "url": "https://www.kapwing.com/404-illustrations",
-        "logo": "https://afterwork-design.github.io/castalia/images/site/404-illustrations.jpg"
+        "title": "Tipranks",
+        "description": "一家来自以色列专门为分析师做排名的公司",
+        "url": "https://www.tipranks.com/",
+        "logo": "https://play-lh.googleusercontent.com/FJZxKv_olUH2CNQmyo4ECkLgu8I7U_otB91iqdDBWxR3YzjePQkNU8gdRqI1vpWpEgg=w480-h960-rw"
+      },
+      {
+        "title": "Finviz",
+        "description": "一个免费的美股股票筛选器，除了股价资讯外，也有新闻、财报、内部人、回测等功能",
+        "url": "https://finviz.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109R2Jlqg.jpg"
+      },
+      {
+        "title": "Investing",
+        "description": "广泛提供全球和当地金融品种的多种财经工具，是交易者和投资者的一站式商店",
+        "url": "https://cn.investing.com/",
+        "logo": "https://play-lh.googleusercontent.com/qS9RAY2HpyYSbMmCngHwyplZrT7n4-Ksjl2Ma36ExFiwVeDK6ijRC9sgK-G_BxEJ-XsM=w480-h960-rw"
       }
     ]
   },
   {
-    "title": "色彩",
+    "title": "期权",
     "icon": "https://afterwork-design.github.io/castalia/images/menu/color.svg",
     "site": [
       {
         "title": "ColorDrop",
-        "description": "每组4种颜色",
+        "description": "每组 4 种颜色",
         "url": "https://colordrop.io",
         "logo": "https://afterwork-design.github.io/castalia/images/site/colordrop.png"
       },
@@ -185,7 +179,7 @@
       },
       {
         "title": "Open Color",
-        "description": "13个色系，每种色系分10个明度",
+        "description": "13 个色系，每种色系分 10 个明度",
         "url": "https://yeun.github.io/open-color/",
         "logo": "https://afterwork-design.github.io/castalia/images/site/opencolor.png"
       },
@@ -280,7 +274,7 @@
         "logo": "https://afterwork-design.github.io/castalia/images/site/iso.png"
       },
       {
-        "title": "PR模板网",
+        "title": "PR 模板网",
         "description": "Premiere 模板素材等资源下载网站",
         "url": "https://prmuban.com",
         "logo": "https://afterwork-design.github.io/castalia/images/site/premiere.png"
@@ -341,7 +335,7 @@
       },
       {
         "title": "docsmall",
-        "description": "在线免费图片、PDF压缩工具",
+        "description": "在线免费图片、PDF 压缩工具",
         "url": "https://docsmall.com",
         "logo": "https://afterwork-design.github.io/castalia/images/site/docsmall.jpg"
       },
@@ -359,7 +353,7 @@
       },
       {
         "title": "Contrast Ratio",
-        "description": "轻松计算色彩对比度，帮助通过WCAG",
+        "description": "轻松计算色彩对比度，帮助通过 WCAG",
         "url": "https://contrast-ratio.com",
         "logo": "https://afterwork-design.github.io/castalia/images/site/contrast-ratio.jpg"
       },
@@ -377,7 +371,7 @@
       },
       {
         "title": "即时设计",
-        "description": "可实时协作的专业UI设计工具",
+        "description": "可实时协作的专业 UI 设计工具",
         "url": "https://js.design",
         "logo": "https://afterwork-design.github.io/castalia/images/site/js-design.png"
       },
@@ -497,13 +491,13 @@
     "site": [
       {
         "title": "Glassmorphism Generator",
-        "description": "在线调节生成磨砂玻璃效果，可直接复制CSS",
+        "description": "在线调节生成磨砂玻璃效果，可直接复制 CSS",
         "url": "https://hype4.academy/tools/glassmorphism-generator",
         "logo": "https://afterwork-design.github.io/castalia/images/site/glassmorphism.png"
       },
       {
         "title": "Neumorphism",
-        "description": "在线调节生成新拟态效果，自动生成CSS",
+        "description": "在线调节生成新拟态效果，自动生成 CSS",
         "url": "https://neumorphism.io/#e0e0e0",
         "logo": "https://afterwork-design.github.io/castalia/images/site/neumorphism.png"
       },
