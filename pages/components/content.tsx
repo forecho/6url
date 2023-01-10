@@ -8,7 +8,6 @@ import Footer from "./footer";
 export default function Content() {
     return (
         <Box css={{px: "$12", mt: "$8", "@xsMax": {px: "$10"}}}>
-            <Container>
             <Banner/>
             <Grid.Container gap={2}>
                 {
@@ -37,7 +36,6 @@ export default function Content() {
                 }
                 <Footer/>
             </Grid.Container>
-            </Container>
 
         </Box>
     );
