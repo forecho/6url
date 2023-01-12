@@ -159,6 +159,18 @@
         "description": "找到著名价值投资者持有的投资组合",
         "url": "https://valuesider.com/",
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109d5qcRI.jpg"
+      },
+      {
+        "title": "Koyfin",
+        "description": "一个强大而简单的财务数据和分析平台，将指导您做出更好的投资决策",
+        "url": "https://app.koyfin.com/",
+        "logo": "https://play-lh.googleusercontent.com/v0MVwNIxNtiYGaJQxgGhJ-AVX648sNzSpk0ndObSMBSVOx5YAImywXcRAenEaWeUm8g=w240-h480-rw"
+      },
+      {
+        "title": "TradingLogic",
+        "description": "观察市场宽度的网站",
+        "url": "https://www.trading-logic.com/",
+        "logo": "https://play-lh.googleusercontent.com/v0MVwNIxNtiYGaJQxgGhJ-AVX648sNzSpk0ndObSMBSVOx5YAImywXcRAenEaWeUm8g=w240-h480-rw"
       }
     ]
   },
