@@ -4,6 +4,12 @@
     "icon": "https://afterwork-design.github.io/castalia/images/menu/icon.svg",
     "site": [
       {
+        "title": "长桥证券",
+        "description": "新一代互联网券商，极速交易体验，港美股终生免佣*",
+        "url": "http://link.3li3.com/qiao",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20211023jMOM3s.jpg"
+      },
+      {
         "title": "盈立智投",
         "description": "境外投资新一代专业智能投资平台",
         "url": "http://link.3li3.com/yxzq",
@@ -14,12 +20,6 @@
         "description": "由新浪战略投资的香港证券公司，专业的股票交易软件",
         "url": "http://link.3li3.com/hstong",
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20220829OJVEmb.jpg"
-      },
-      {
-        "title": "长桥证券",
-        "description": "互联网人的一站式全球资产配置平台",
-        "url": "http://link.3li3.com/qiao",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20211023jMOM3s.jpg"
       },
       {
         "title": "RockFlow",
