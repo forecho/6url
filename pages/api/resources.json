@@ -159,6 +159,12 @@
         "description": "观察市场宽度的网站",
         "url": "https://www.trading-logic.com/",
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230112fJVcpI.jpg"
+      },
+      {
+        "title": "CME 美联储观察工具",
+        "description": "追踪 FOMC 利率变动的最新可能性",
+        "url": "https://www.cmegroup.com/cn-s/markets/interest-rates/cme-fedwatch-tool.html",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230222z1pfF9.jpg"
       }
     ]
   },
