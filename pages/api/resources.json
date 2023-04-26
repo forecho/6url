@@ -50,6 +50,18 @@
         "description": "广泛提供全球和当地金融品种的多种财经工具，是交易者和投资者的一站式商店",
         "url": "https://cn.investing.com/",
         "logo": "https://play-lh.googleusercontent.com/qS9RAY2HpyYSbMmCngHwyplZrT7n4-Ksjl2Ma36ExFiwVeDK6ijRC9sgK-G_BxEJ-XsM=w480-h960-rw"
+      },
+      {
+        "title": "Ape Wisdom",
+        "description": "找出 Reddit 上讨论度高的股票",
+        "url": "https://apewisdom.io/",
+        "logo": "https://img.forecho.com/H6qQpH.png"
+      },
+      {
+        "title": "High Short Interest Stocks",
+        "description": "高空头利率股票",
+        "url": "https://www.highshortinterest.com/",
+        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109b2KOKt.png"
       }
     ]
   },
@@ -92,18 +104,6 @@
         "description": "由本人创建的期权 Twitter 列表",
         "url": "https://twitter.com/i/lists/1606299260877955072",
         "logo": "https://play-lh.googleusercontent.com/1byNc8Mr2o1gV5Qd_42xF5y_RjTVUFhW_fKF8SMPfYbYoiAhSteBckNKwEU28hj0lXc=s48-rw"
-      },
-      {
-        "title": "Ape Wisdom",
-        "description": "找出 Reddit 上讨论度高的股票",
-        "url": "https://apewisdom.io/",
-        "logo": "https://img.forecho.com/H6qQpH.png"
-      },
-      {
-        "title": "High Short Interest Stocks",
-        "description": "高空头利率股票",
-        "url": "https://www.highshortinterest.com/",
-        "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230109b2KOKt.png"
       }
     ]
   },
