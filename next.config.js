@@ -6,6 +6,7 @@ const nextConfig = {
       "afterwork-design.github.io",
       "blog-1251237404.cos.ap-guangzhou.myqcloud.com",
       "play-lh.googleusercontent.com",
+      "img.forecho.com"
     ],
   },
 };
