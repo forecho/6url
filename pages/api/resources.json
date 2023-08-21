@@ -188,6 +188,12 @@
         "description": "追踪 FOMC 利率变动的最新可能性",
         "url": "https://www.cmegroup.com/cn-s/markets/interest-rates/cme-fedwatch-tool.html",
         "logo": "https://blog-1251237404.cos.ap-guangzhou.myqcloud.com/20230222z1pfF9.jpg"
+      },
+      {
+        "title": "财报日历",
+        "description": "美股财报日历",
+        "url": "https://unusualwhales.com/earnings",
+        "logo": "https://play-lh.googleusercontent.com/9PPOeyCUOteezecLRNyw04piJAy77X2uvhjSMG33M33Q1xh650TDq7ppU4u6altbkhQ=w240-h480-rw"
       }
     ]
   },
