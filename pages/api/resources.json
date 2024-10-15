@@ -116,6 +116,12 @@
         "description": "最快的财经新闻和市场数据",
         "url": "https://www.benzinga.com/",
         "logo": "https://play-lh.googleusercontent.com/BaXLWFZOt-p50mQEfgxqdKyyjISAcwVC4SjqCGXXVk3F9jt23lMzjA8HEB0-D3xnqPQ=s48-rw"
+      },
+      {
+        "title": "经济日历",
+        "description": "英为财情财经提供专业的财经日历",
+        "url": "https://cn.investing.com/economic-calendar/",
+        "logo": "https://play-lh.googleusercontent.com/9MD3biGQRiYH8NdM6MT4uU9CFEBdeyjwA5OV5Ucab0vjF6O1PD7qIF63FhSk-eqksA=w480-h960-rw"
       }
     ]
   },
