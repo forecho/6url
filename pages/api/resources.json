@@ -46,6 +46,12 @@
     "icon": "https://afterwork-design.github.io/castalia/images/menu/illustration.svg",
     "site": [
       {
+        "title": "Financial Juice",
+        "description": "一个专注于金融市场的网站，提供实时新闻",
+        "url": "https://www.financialjuice.com/",
+        "logo": "https://img.forecho.com/om0KF2.png"
+      },
+      {
         "title": "华尔街日报",
         "description": "美国最受信任的报纸，获得可信赖的见解和深入分析",
         "url": "https://cn.wsj.com/",
