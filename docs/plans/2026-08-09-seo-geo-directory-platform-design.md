@@ -2012,10 +2012,8 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 ### 29.4 下一批实现
 
 - 通用内容 preview / commit、ETag 更新与分类编辑发布流程。
-- Exchange 首次反链验证、每日定时复查、连续失败暂停和申请人主动 recheck。
-- Stripe 异步支付、Session 过期、退款和人工付款 / 退款管理 API。
-- Sponsor 用户付款后的广告内容发布、管理员广告启停 / 排序 / 到期操作和现有 4 个广告迁移。
 - 四语言公开路由、详情页、hreflang、sitemap、JSON-LD、GEO 来源和索引发布门槛。
+- 现有 4 个 Sponsor 广告迁移和生产 Stripe / Email / Slack / ImgAnt 联调。
 - 简单管理后台页面；后端 API 继续作为后台与本地 AI 的统一业务入口。
 
 ### 29.5 发布与反链闭环进度
@@ -2027,3 +2025,13 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 - 完成申请人限流 recheck、管理员 placement recheck 与每日到期扫描 Worker；所有检查保存状态、HTTP 信息、匹配链接、rel、重定向链和错误码。
 - 完成支付审查修复：支持 Stripe 异步成功、Session 过期与异步失败后的 Checkout 重试，并强制 PaymentEvent 完成标记参与事务成功条件。
 - 完成 revalidation outbox Worker 与 Next.js `/api/internal/revalidate`：请求使用 HMAC-SHA256、5 分钟时间窗、event ID 短期防重放、路径允许规则、条件 claim、stale 恢复与指数退避。
+
+### 29.6 Sponsor 与退款闭环进度
+
+- 完成付费 Sponsor 上刊 API：仅接受 `paid` 申请和唯一已付款广告订单，将健康 ImgAnt `6url` 素材、四语言 localization、订单期限快照、active 广告、申请 `published` 状态、审计、邮件 / Slack 通知及首页 revalidation job 在同一事务提交。
+- 上刊邮件包含线上展示页、开始时间和结束时间；广告状态 API 返回订单退款时间及广告展示状态、期限和 version。
+- 完成管理员免费广告的 `commit`：支持 active、paused、canceled、排序与展示时间，使用 ETag、`If-Match` 和 version 防止后台与本地 AI 并发覆盖；commit 同事务刷新四语言首页。
+- 完成广告到期 Worker：条件更新到期 active 广告为 `expired`，写审计与首页刷新；广告主收到到期邮件，管理员可通过 Slack outbox 获知状态。
+- 完成 Stripe 全额退款 API 和 `refund.updated`：同步成功时撤销 paid placement 或 Sponsor 广告，异步退款使用 `refund_pending`；成功后下架权益、保留网站内容、写通知与刷新任务，失败或取消时恢复订单为 `paid`。
+- 完成人工订单 `mark-paid` API；仅允许 `provider=manual,status=pending_manual`，要求 `Idempotency-Key`、外部付款引用和审计说明。
+- SQLite 集成测试覆盖付费广告原子上刊、管理员广告乐观并发 commit、广告到期、同步退款下架和异步退款 webhook 完成。

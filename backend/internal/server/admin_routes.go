@@ -92,6 +92,7 @@ func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
 		}
 		c.JSON(http.StatusOK, gin.H{"data": rows})
 	})
+	admin.GET("/ads/:id", requireScope("ads:write"), func(c *gin.Context) { getAdminAd(c, deps) })
 	admin.GET("/orders", requireScope("payments:read"), func(c *gin.Context) {
 		rows, err := deps.Ent.PaymentOrder.Query().Order(ent.Desc(paymentorder.FieldCreatedAt), ent.Desc(paymentorder.FieldID)).Limit(pageSize(c)).All(c.Request.Context())
 		if err != nil {
@@ -105,6 +106,7 @@ func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
 	})
 	admin.POST("/assets/register", requireScope("assets:write"), func(c *gin.Context) { registerImgAntAsset(c, deps) })
 	admin.POST("/ads/manual", requireScope("ads:write"), func(c *gin.Context) { createManualAd(c, deps) })
+	admin.POST("/ads/:id/commit", requireScope("ads:write"), func(c *gin.Context) { commitAd(c, deps) })
 	admin.POST("/submissions/:id/preapprove", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "preapprove") })
 	admin.POST("/submissions/:id/request-changes", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "request_changes") })
 	admin.POST("/submissions/:id/reject", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "reject") })
@@ -113,6 +115,9 @@ func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
 	admin.POST("/ad-applications/:id/preapprove", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "preapprove") })
 	admin.POST("/ad-applications/:id/request-changes", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "request_changes") })
 	admin.POST("/ad-applications/:id/reject", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "reject") })
+	admin.POST("/ad-applications/:id/publish", requireScope("ads:write"), func(c *gin.Context) { publishAdApplication(c, deps) })
+	admin.POST("/orders/:id/mark-paid", requireScope("payments:write"), func(c *gin.Context) { markManualOrderPaid(c, deps) })
+	admin.POST("/orders/:id/refund", requireScope("payments:write"), func(c *gin.Context) { refundOrder(c, deps) })
 }
 
 func createManualSite(c *gin.Context, deps Dependencies) {

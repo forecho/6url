@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/forecho/6url/backend/internal/adlifecycle"
 	"github.com/forecho/6url/backend/internal/backlink"
 	"github.com/forecho/6url/backend/internal/config"
 	"github.com/forecho/6url/backend/internal/database"
@@ -48,6 +49,7 @@ func main() {
 	if sealerErr == nil {
 		sealerDependency = &sealer
 		go notifications.NewWorker(client, cfg, sealer).Run(rootCtx)
+		go (adlifecycle.Worker{Client: client, Sealer: &sealer, SlackChannelID: cfg.SlackChannelID}).Run(rootCtx)
 		go (backlink.Worker{Monitor: backlink.Monitor{Client: client, Checker: backlinkChecker, TargetURL: cfg.AppBaseURL, Sealer: &sealer, SlackChannelID: cfg.SlackChannelID}}).Run(rootCtx)
 	} else {
 		log.Printf("notification worker disabled: %v", sealerErr)

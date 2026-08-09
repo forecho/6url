@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,8 @@ import (
 	"github.com/forecho/6url/backend/ent/submission"
 	"github.com/forecho/6url/backend/internal/stripeclient"
 )
+
+var errRefundWebhookMismatch = errors.New("refund webhook mismatch")
 
 func createCheckout(c *gin.Context, deps Dependencies, subjectType string) {
 	session, ok := authenticateApplicationSession(c, deps, subjectType)
@@ -74,7 +77,9 @@ type stripeEvent struct {
 			PaymentStatus string            `json:"payment_status"`
 			PaymentIntent string            `json:"payment_intent"`
 			AmountTotal   int64             `json:"amount_total"`
+			Amount        int64             `json:"amount"`
 			Currency      string            `json:"currency"`
+			Status        string            `json:"status"`
 			Livemode      bool              `json:"livemode"`
 			Metadata      map[string]string `json:"metadata"`
 		} `json:"object"`
@@ -106,6 +111,18 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		return
 	}
 	digest := sha256.Sum256(payload)
+	if event.Type == "refund.created" || event.Type == "refund.updated" || event.Type == "refund.failed" || event.Type == "charge.refund.updated" {
+		if err := processRefundWebhook(c, deps, event, digest); err != nil {
+			if errors.Is(err, errRefundWebhookMismatch) {
+				writeError(c, http.StatusBadRequest, "refund_mismatch", "The Stripe refund event does not match a payment order.")
+			} else {
+				writeError(c, http.StatusInternalServerError, "internal_error", "Unable to process the Stripe refund event.")
+			}
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"received": true})
+		return
+	}
 	paidEvent := (event.Type == "checkout.session.completed" || event.Type == "checkout.session.async_payment_succeeded") && event.Data.Object.PaymentStatus == "paid"
 	retryEvent := event.Type == "checkout.session.expired" || event.Type == "checkout.session.async_payment_failed"
 	if retryEvent {
@@ -184,6 +201,81 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"received": true})
+}
+
+func processRefundWebhook(c *gin.Context, deps Dependencies, event stripeEvent, digest [32]byte) error {
+	refund := event.Data.Object
+	if refund.ID == "" || refund.PaymentIntent == "" || refund.Amount <= 0 || refund.Currency == "" || refund.Status == "" {
+		return errRefundWebhookMismatch
+	}
+	tx, err := deps.Ent.Tx(c.Request.Context())
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if _, err := tx.PaymentEvent.Create().SetProvider("stripe").SetEventID(event.ID).SetType(event.Type).SetPayloadEncryptedOrRedacted("sha256:" + hex.EncodeToString(digest[:])).SetReceivedAt(time.Now()).SetProcessingStartedAt(time.Now()).Save(c.Request.Context()); err != nil {
+		if ent.IsConstraintError(err) {
+			return nil
+		}
+		return err
+	}
+	order, err := tx.PaymentOrder.Query().Where(paymentorder.StripePaymentIntentIDEQ(refund.PaymentIntent)).Only(c.Request.Context())
+	if ent.IsNotFound(err) {
+		return errRefundWebhookMismatch
+	}
+	if err != nil {
+		return err
+	}
+	if order.AmountMinor != refund.Amount || !strings.EqualFold(order.Currency, refund.Currency) || order.Provider != paymentorder.ProviderStripe || order.ExternalRef != nil && *order.ExternalRef != refund.ID {
+		return errRefundWebhookMismatch
+	}
+	now := time.Now().UTC()
+	switch refund.Status {
+	case "succeeded":
+		if order.Status == paymentorder.StatusPaid || order.Status == paymentorder.StatusRefundPending {
+			changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusIn(paymentorder.StatusPaid, paymentorder.StatusRefundPending)).SetStatus(paymentorder.StatusRefunded).SetExternalRef(refund.ID).SetRefundedAt(now).Save(c.Request.Context())
+			if err != nil || changed != 1 {
+				return errors.New("refund order changed")
+			}
+			order.Status = paymentorder.StatusRefunded
+			order.ExternalRef = &refund.ID
+			order.RefundedAt = &now
+			if err := applySuccessfulRefund(c, deps, tx, order, now); err != nil {
+				return err
+			}
+			if _, err := tx.AdminAuditLog.Create().SetAction("order.refund_succeeded").SetResourceType("payment_order").SetResourceID(strconv.Itoa(order.ID)).SetReason("Stripe refund webhook completed").Save(c.Request.Context()); err != nil {
+				return err
+			}
+		}
+	case "pending", "requires_action":
+		if order.Status == paymentorder.StatusPaid {
+			changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusEQ(paymentorder.StatusPaid)).SetStatus(paymentorder.StatusRefundPending).SetExternalRef(refund.ID).Save(c.Request.Context())
+			if err != nil || changed != 1 {
+				return errors.New("refund order changed")
+			}
+		}
+	case "failed", "canceled":
+		if order.Status == paymentorder.StatusRefundPending {
+			changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusEQ(paymentorder.StatusRefundPending)).SetStatus(paymentorder.StatusPaid).ClearExternalRef().Save(c.Request.Context())
+			if err != nil || changed != 1 {
+				return errors.New("refund order changed")
+			}
+			if _, err := tx.AdminAuditLog.Create().SetAction("order.refund_failed").SetResourceType("payment_order").SetResourceID(strconv.Itoa(order.ID)).SetReason("Stripe refund status: " + refund.Status).Save(c.Request.Context()); err != nil {
+				return err
+			}
+			payload := notificationPayload{ApplicantName: "6URL admin", ResourceID: order.ID, ResourceType: "payment_order", Name: "Payment order #" + strconv.Itoa(order.ID), Status: "refund_" + refund.Status, ReviewNote: "Stripe refund requires administrator attention."}
+			if err := createSlackOutbox(c, deps, tx, "order.refund_failed", order.ID, payload); err != nil {
+				return err
+			}
+		}
+	default:
+		return errRefundWebhookMismatch
+	}
+	changed, err := tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(now).Save(c.Request.Context())
+	if err != nil || changed != 1 {
+		return errors.New("payment event completion failed")
+	}
+	return tx.Commit()
 }
 
 func resetStripeCheckout(c *gin.Context, deps Dependencies, event stripeEvent, digest [32]byte) error {

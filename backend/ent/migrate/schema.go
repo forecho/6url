@@ -525,7 +525,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "purpose", Type: field.TypeEnum, Enums: []string{"listing", "ad"}},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "processing", "paid", "failed", "expired", "refunded", "pending_manual"}, Default: "pending"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "processing", "paid", "failed", "expired", "refund_pending", "refunded", "pending_manual"}, Default: "pending"},
 		{Name: "provider", Type: field.TypeEnum, Enums: []string{"stripe", "manual"}},
 		{Name: "amount_minor", Type: field.TypeInt64},
 		{Name: "currency", Type: field.TypeString, Size: 3, Default: "usd"},

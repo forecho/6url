@@ -27,16 +27,19 @@ const (
 )
 
 type Payload struct {
-	ApplicantName   string `json:"applicant_name,omitempty"`
-	Email           string `json:"email,omitempty"`
-	ResourceID      int    `json:"resource_id"`
-	ResourceType    string `json:"resource_type"`
-	ApplicationType string `json:"application_type,omitempty"`
-	Name            string `json:"name,omitempty"`
-	URL             string `json:"url,omitempty"`
-	Status          string `json:"status"`
-	StatusURL       string `json:"status_url,omitempty"`
-	ReviewNote      string `json:"review_note,omitempty"`
+	ApplicantName   string     `json:"applicant_name,omitempty"`
+	Email           string     `json:"email,omitempty"`
+	ResourceID      int        `json:"resource_id"`
+	ResourceType    string     `json:"resource_type"`
+	ApplicationType string     `json:"application_type,omitempty"`
+	Name            string     `json:"name,omitempty"`
+	URL             string     `json:"url,omitempty"`
+	Status          string     `json:"status"`
+	StatusURL       string     `json:"status_url,omitempty"`
+	ReviewNote      string     `json:"review_note,omitempty"`
+	PageURL         string     `json:"page_url,omitempty"`
+	StartsAt        *time.Time `json:"starts_at,omitempty"`
+	EndsAt          *time.Time `json:"ends_at,omitempty"`
 }
 
 type Message struct {
@@ -324,13 +327,16 @@ type copySet struct {
 	ReviewLabel   string
 	StatusLink    string
 	ResourceLabel string
+	PageLink      string
+	StartsLabel   string
+	EndsLabel     string
 }
 
 var localizedCopy = map[string]copySet{
-	"zh-CN": {"6URL 申请状态更新", "您好", "当前状态", "审核说明", "查看申请状态", "申请"},
-	"en":    {"Your 6URL application update", "Hello", "Current status", "Review note", "View application status", "Application"},
-	"ja":    {"6URL 申請ステータス更新", "こんにちは", "現在のステータス", "審査コメント", "申請状況を確認", "申請"},
-	"ko":    {"6URL 신청 상태 업데이트", "안녕하세요", "현재 상태", "검토 메모", "신청 상태 보기", "신청"},
+	"zh-CN": {"6URL 申请状态更新", "您好", "当前状态", "审核说明", "查看申请状态", "申请", "查看展示页面", "开始时间", "结束时间"},
+	"en":    {"Your 6URL application update", "Hello", "Current status", "Review note", "View application status", "Application", "View published page", "Starts at", "Ends at"},
+	"ja":    {"6URL 申請ステータス更新", "こんにちは", "現在のステータス", "審査コメント", "申請状況を確認", "申請", "掲載ページを見る", "開始日時", "終了日時"},
+	"ko":    {"6URL 신청 상태 업데이트", "안녕하세요", "현재 상태", "검토 메모", "신청 상태 보기", "신청", "게시 페이지 보기", "시작 시간", "종료 시간"},
 }
 
 func render(localeCode, kind string, payload Payload) (string, string, string) {
@@ -349,6 +355,15 @@ func render(localeCode, kind string, payload Payload) (string, string, string) {
 	if payload.StatusURL != "" {
 		lines = append(lines, "", copy.StatusLink+": "+payload.StatusURL)
 	}
+	if payload.PageURL != "" {
+		lines = append(lines, "", copy.PageLink+": "+payload.PageURL)
+	}
+	if payload.StartsAt != nil {
+		lines = append(lines, copy.StartsLabel+": "+payload.StartsAt.UTC().Format(time.RFC3339))
+	}
+	if payload.EndsAt != nil {
+		lines = append(lines, copy.EndsLabel+": "+payload.EndsAt.UTC().Format(time.RFC3339))
+	}
 	textBody := strings.Join(lines, "\n")
 	htmlLines := []string{"<p>" + html.EscapeString(copy.Greeting+" "+payload.ApplicantName) + ",</p>", "<p><strong>" + html.EscapeString(copy.ResourceLabel) + ":</strong> " + html.EscapeString(payload.Name) + "<br><strong>" + html.EscapeString(copy.StatusLabel) + ":</strong> " + html.EscapeString(payload.Status) + "</p>"}
 	if payload.ReviewNote != "" {
@@ -356,6 +371,15 @@ func render(localeCode, kind string, payload Payload) (string, string, string) {
 	}
 	if payload.StatusURL != "" {
 		htmlLines = append(htmlLines, `<p><a href="`+html.EscapeString(payload.StatusURL)+`">`+html.EscapeString(copy.StatusLink)+"</a></p>")
+	}
+	if payload.PageURL != "" {
+		htmlLines = append(htmlLines, `<p><a href="`+html.EscapeString(payload.PageURL)+`">`+html.EscapeString(copy.PageLink)+"</a></p>")
+	}
+	if payload.StartsAt != nil {
+		htmlLines = append(htmlLines, "<p><strong>"+html.EscapeString(copy.StartsLabel)+":</strong> "+html.EscapeString(payload.StartsAt.UTC().Format(time.RFC3339))+"</p>")
+	}
+	if payload.EndsAt != nil {
+		htmlLines = append(htmlLines, "<p><strong>"+html.EscapeString(copy.EndsLabel)+":</strong> "+html.EscapeString(payload.EndsAt.UTC().Format(time.RFC3339))+"</p>")
 	}
 	return subject, textBody, strings.Join(htmlLines, "")
 }

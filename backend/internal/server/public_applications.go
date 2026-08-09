@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/forecho/6url/backend/ent"
+	"github.com/forecho/6url/backend/ent/ad"
 	"github.com/forecho/6url/backend/ent/adapplication"
 	"github.com/forecho/6url/backend/ent/applicationsession"
 	"github.com/forecho/6url/backend/ent/category"
@@ -82,16 +83,19 @@ type adChangesRequest struct {
 }
 
 type notificationPayload struct {
-	ApplicantName   string `json:"applicant_name,omitempty"`
-	Email           string `json:"email,omitempty"`
-	ResourceID      int    `json:"resource_id"`
-	ResourceType    string `json:"resource_type"`
-	ApplicationType string `json:"application_type,omitempty"`
-	Name            string `json:"name,omitempty"`
-	URL             string `json:"url,omitempty"`
-	Status          string `json:"status"`
-	StatusURL       string `json:"status_url,omitempty"`
-	ReviewNote      string `json:"review_note,omitempty"`
+	ApplicantName   string     `json:"applicant_name,omitempty"`
+	Email           string     `json:"email,omitempty"`
+	ResourceID      int        `json:"resource_id"`
+	ResourceType    string     `json:"resource_type"`
+	ApplicationType string     `json:"application_type,omitempty"`
+	Name            string     `json:"name,omitempty"`
+	URL             string     `json:"url,omitempty"`
+	Status          string     `json:"status"`
+	StatusURL       string     `json:"status_url,omitempty"`
+	ReviewNote      string     `json:"review_note,omitempty"`
+	PageURL         string     `json:"page_url,omitempty"`
+	StartsAt        *time.Time `json:"starts_at,omitempty"`
+	EndsAt          *time.Time `json:"ends_at,omitempty"`
 }
 
 func registerPublicApplicationRoutes(public *gin.RouterGroup, deps Dependencies) {
@@ -356,7 +360,7 @@ func getSubmissionStatus(c *gin.Context, deps Dependencies) {
 		return
 	}
 	if orderRow, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.SubmissionIDEQ(row.ID)).Order(ent.Desc(paymentorder.FieldID)).First(c.Request.Context()); err == nil {
-		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt}
+		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt, "refunded_at": orderRow.RefundedAt}
 	} else if !ent.IsNotFound(err) {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the submission payment.")
 		return
@@ -377,9 +381,15 @@ func getAdApplicationStatus(c *gin.Context, deps Dependencies) {
 	c.Header("Cache-Control", "private, no-store")
 	response := gin.H{"id": row.ID, "status": row.Status, "title": row.RawTitle, "target_url": row.TargetURL, "requested_locales": row.RequestedLocales, "preferred_locale": row.PreferredLocale, "review_note": row.ReviewNote, "created_at": row.CreatedAt, "updated_at": row.UpdatedAt}
 	if orderRow, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.AdApplicationIDEQ(row.ID)).Order(ent.Desc(paymentorder.FieldID)).First(c.Request.Context()); err == nil {
-		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt}
+		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt, "refunded_at": orderRow.RefundedAt}
 	} else if !ent.IsNotFound(err) {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the advertising payment.")
+		return
+	}
+	if adRow, err := deps.Ent.Ad.Query().Where(ad.AdApplicationIDEQ(row.ID)).Only(c.Request.Context()); err == nil {
+		response["ad"] = gin.H{"id": adRow.ID, "status": adRow.Status, "starts_at": adRow.StartsAt, "ends_at": adRow.EndsAt, "version": adRow.Version}
+	} else if !ent.IsNotFound(err) {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the published advertisement.")
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -587,6 +597,22 @@ func createApplicationOutbox(c *gin.Context, deps Dependencies, tx *ent.Tx, kind
 		}
 	}
 	return nil
+}
+
+func createSlackOutbox(c *gin.Context, deps Dependencies, tx *ent.Tx, kind string, resourceID int, payload notificationPayload) error {
+	if deps.Config.SlackChannelID == "" {
+		return nil
+	}
+	if deps.PayloadSealer == nil {
+		return errors.New("notification payload sealer is unavailable")
+	}
+	key := strings.ReplaceAll(kind, ".", ":") + ":" + strconv.Itoa(resourceID) + ":" + strconv.FormatInt(time.Now().UnixNano(), 36) + ":slack"
+	encrypted, err := deps.PayloadSealer.Seal(payload, key)
+	if err != nil {
+		return err
+	}
+	_, err = tx.NotificationDelivery.Create().SetDedupeKey(key).SetChannel(notificationdelivery.ChannelSlack).SetKind(kind).SetRecipient(deps.Config.SlackChannelID).SetLocale("en").SetTemplateKey(kind).SetPayloadEncrypted(encrypted).SetPayloadExpiresAt(time.Now().Add(7 * 24 * time.Hour)).Save(c.Request.Context())
+	return err
 }
 
 func allowRequest(c *gin.Context, deps Dependencies, action string, limit int, window time.Duration) bool {

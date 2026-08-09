@@ -289,7 +289,7 @@ func (PaymentOrder) Fields() []ent.Field {
 		field.Enum("purpose").Values("listing", "ad"),
 		field.Int("submission_id").Optional().Nillable(), field.Int("ad_application_id").Optional().Nillable(), field.Int("site_id").Optional().Nillable(),
 		field.Int("listing_plan_id").Optional().Nillable(), field.Int("ad_offer_id").Optional().Nillable(),
-		field.Enum("status").Values("pending", "processing", "paid", "failed", "expired", "refunded", "pending_manual").Default("pending"),
+		field.Enum("status").Values("pending", "processing", "paid", "failed", "expired", "refund_pending", "refunded", "pending_manual").Default("pending"),
 		field.Enum("provider").Values("stripe", "manual"), field.Int64("amount_minor").NonNegative(), field.String("currency").MaxLen(3).Default("usd"),
 		field.Bool("livemode").Default(false), field.Int("duration_days_snapshot").Optional().Nillable(), field.JSON("locales_snapshot", []string{}).Default([]string{}),
 		field.String("stripe_price_id_snapshot").MaxLen(255).Optional().Nillable(),

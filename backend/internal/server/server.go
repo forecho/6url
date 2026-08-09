@@ -29,6 +29,10 @@ type StripeCheckout interface {
 	CreateCheckout(context.Context, stripeclient.CheckoutRequest) (stripeclient.CheckoutSession, error)
 }
 
+type StripeRefund interface {
+	Refund(context.Context, stripeclient.RefundRequest) (stripeclient.Refund, error)
+}
+
 type Dependencies struct {
 	Config        config.Config
 	Ent           *ent.Client
@@ -37,6 +41,7 @@ type Dependencies struct {
 	RateLimiter   ratelimit.Limiter
 	PayloadSealer *securepayload.Sealer
 	Stripe        StripeCheckout
+	StripeRefund  StripeRefund
 	Backlinks     backlink.Checker
 }
 
@@ -60,6 +65,9 @@ func New(deps Dependencies) *gin.Engine {
 	}
 	if deps.Stripe == nil {
 		deps.Stripe = stripeclient.Client{SecretKey: deps.Config.StripeSecretKey}
+	}
+	if deps.StripeRefund == nil {
+		deps.StripeRefund = stripeclient.Client{SecretKey: deps.Config.StripeSecretKey}
 	}
 	if deps.Backlinks == nil {
 		deps.Backlinks = backlink.Client{}

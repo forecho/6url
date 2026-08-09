@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "6URL Administration API",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "servers": [
     { "url": "https://api.6url.net" }
@@ -84,6 +84,47 @@
             "items": { "$ref": "#/components/schemas/ManualSiteLocalization" }
           }
         }
+      },
+      "AdLocalization": {
+        "type": "object",
+        "required": ["locale", "title", "description", "cta_label", "alt_text"],
+        "properties": {
+          "locale": { "type": "string", "enum": ["zh-CN", "en", "ja", "ko"] },
+          "title": { "type": "string", "maxLength": 180 },
+          "description": { "type": "string", "maxLength": 500 },
+          "cta_label": { "type": "string", "maxLength": 80 },
+          "alt_text": { "type": "string", "maxLength": 300 }
+        }
+      },
+      "PublishAdRequest": {
+        "type": "object",
+        "required": ["image_asset_id", "localizations"],
+        "properties": {
+          "image_asset_id": { "type": "integer", "minimum": 1 },
+          "sort_order": { "type": "integer", "default": 0 },
+          "localizations": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/components/schemas/AdLocalization" } }
+        }
+      },
+      "CommitAdRequest": {
+        "type": "object",
+        "required": ["status", "version"],
+        "properties": {
+          "status": { "type": "string", "enum": ["active", "paused", "canceled"] },
+          "sort_order": { "type": "integer" },
+          "starts_at": { "type": ["string", "null"], "format": "date-time" },
+          "ends_at": { "type": ["string", "null"], "format": "date-time" },
+          "version": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "MarkPaidRequest": {
+        "type": "object",
+        "required": ["external_ref", "note"],
+        "properties": { "external_ref": { "type": "string", "maxLength": 255 }, "note": { "type": "string", "maxLength": 500 } }
+      },
+      "RefundRequest": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": { "reason": { "type": "string", "maxLength": 500 } }
       }
     }
   },
@@ -166,11 +207,17 @@
     "/admin/v1/ad-applications/{id}/reject": {
       "post": { "operationId": "rejectAdApplication", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Advertising application rejected" } } }
     },
+    "/admin/v1/ad-applications/{id}/publish": {
+      "post": { "operationId": "publishAdApplication", "description": "Atomically publishes a paid Sponsor ad with four localizations, its paid duration snapshot, audit, notifications and homepage revalidation.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishAdRequest" } } } }, "responses": { "200": { "description": "Sponsor ad published" }, "409": { "description": "Application or paid order is not publishable" } } }
+    },
     "/admin/v1/assets/register": {
       "post": { "operationId": "registerImgAntAsset", "description": "Registers metadata for an image already uploaded by local AI to the ImgAnt 6url album.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetRegisterRequest" } } } }, "responses": { "201": { "description": "Asset registered" } } }
     },
     "/admin/v1/ads/manual": {
       "post": { "operationId": "createManualSponsorAd", "description": "Creates a free administrator-owned draft sponsor ad without an application or payment order.", "responses": { "201": { "description": "Draft sponsor ad created" } } }
+    },
+    "/admin/v1/ads/{id}/commit": {
+      "post": { "operationId": "commitAd", "description": "Commits advertisement state, schedule and sort order with optimistic concurrency and homepage revalidation.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "If-Match", "in": "header", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommitAdRequest" } } } }, "responses": { "200": { "description": "Advertisement committed" }, "412": { "description": "Version or ETag mismatch" } } }
     },
     "/admin/v1/placements/{id}/recheck": {
       "post": { "operationId": "recheckExchangePlacement", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Backlink checked and placement health updated" }, "404": { "description": "Exchange placement not found" } } }
@@ -178,8 +225,17 @@
     "/admin/v1/ads": {
       "get": { "operationId": "listAds", "responses": { "200": { "description": "Sponsor advertisements" } } }
     },
+    "/admin/v1/ads/{id}": {
+      "get": { "operationId": "getAd", "description": "Returns an advertisement and all localizations. ETag uses W/\"ad-{id}-v{version}\" and is required by commit.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Advertisement detail with ETag" }, "404": { "description": "Advertisement not found" } } }
+    },
     "/admin/v1/orders": {
       "get": { "operationId": "listOrders", "responses": { "200": { "description": "Payment orders" } } }
+    },
+    "/admin/v1/orders/{id}/mark-paid": {
+      "post": { "operationId": "markManualOrderPaid", "description": "Marks a pending manual order paid and advances its application. Requires payments:write and Idempotency-Key.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 8, "maxLength": 255 } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MarkPaidRequest" } } } }, "responses": { "200": { "description": "Manual order marked paid" }, "409": { "description": "Order or application state conflict" } } }
+    },
+    "/admin/v1/orders/{id}/refund": {
+      "post": { "operationId": "refundOrder", "description": "Creates a full Stripe refund. Immediate success revokes the paid placement or Sponsor ad atomically; asynchronous refunds enter refund_pending until refund.updated.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 8, "maxLength": 255 } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefundRequest" } } } }, "responses": { "200": { "description": "Refund succeeded" }, "202": { "description": "Refund pending" }, "409": { "description": "Order is not refundable" }, "502": { "description": "Stripe refund failed" } } }
     }
   }
 }
