@@ -102,6 +102,14 @@ func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
 	admin.POST("/sites/manual", requireScope("content:write"), func(c *gin.Context) {
 		createManualSite(c, deps)
 	})
+	admin.POST("/assets/register", requireScope("assets:write"), func(c *gin.Context) { registerImgAntAsset(c, deps) })
+	admin.POST("/ads/manual", requireScope("ads:write"), func(c *gin.Context) { createManualAd(c, deps) })
+	admin.POST("/submissions/:id/preapprove", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "preapprove") })
+	admin.POST("/submissions/:id/request-changes", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "request_changes") })
+	admin.POST("/submissions/:id/reject", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "reject") })
+	admin.POST("/ad-applications/:id/preapprove", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "preapprove") })
+	admin.POST("/ad-applications/:id/request-changes", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "request_changes") })
+	admin.POST("/ad-applications/:id/reject", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "reject") })
 }
 
 func createManualSite(c *gin.Context, deps Dependencies) {

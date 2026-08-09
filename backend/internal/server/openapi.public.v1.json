@@ -1,0 +1,82 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "6URL Public API", "version": "0.2.0" },
+  "servers": [{ "url": "https://api.6url.net" }],
+  "components": {
+    "securitySchemes": {
+      "submissionSession": { "type": "apiKey", "in": "cookie", "name": "__Host-6url-submission" },
+      "adApplicationSession": { "type": "apiKey", "in": "cookie", "name": "__Host-6url-ad" },
+      "csrf": { "type": "apiKey", "in": "header", "name": "X-CSRF-Token" }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
+      },
+      "Submission": {
+        "type": "object",
+        "required": ["type", "applicant_email", "applicant_name", "preferred_locale", "name", "url", "description", "category_id", "turnstile_token"],
+        "properties": {
+          "type": { "type": "string", "enum": ["paid", "exchange"] },
+          "applicant_email": { "type": "string", "format": "email" },
+          "applicant_name": { "type": "string", "maxLength": 180 },
+          "preferred_locale": { "$ref": "#/components/schemas/Locale" },
+          "name": { "type": "string", "maxLength": 180 },
+          "url": { "type": "string", "format": "uri" },
+          "description": { "type": "string", "maxLength": 20000 },
+          "category_id": { "type": "integer", "minimum": 1 },
+          "backlink_url": { "type": "string", "format": "uri", "description": "Required for exchange submissions; registrable domain must match url." },
+          "turnstile_token": { "type": "string" }
+        }
+      },
+      "AdApplication": {
+        "type": "object",
+        "required": ["applicant_email", "applicant_name", "preferred_locale", "target_url", "requested_locales", "title", "description", "turnstile_token"],
+        "properties": {
+          "applicant_email": { "type": "string", "format": "email" },
+          "applicant_name": { "type": "string", "maxLength": 180 },
+          "preferred_locale": { "$ref": "#/components/schemas/Locale" },
+          "target_url": { "type": "string", "format": "uri" },
+          "requested_locales": { "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true, "items": { "$ref": "#/components/schemas/Locale" } },
+          "title": { "type": "string", "maxLength": 180 },
+          "description": { "type": "string", "maxLength": 500 },
+          "source_image_url": { "type": "string", "format": "uri" },
+          "turnstile_token": { "type": "string" }
+        }
+      },
+      "StatusToken": {
+        "type": "object",
+        "required": ["token"],
+        "properties": { "token": { "type": "string", "writeOnly": true } }
+      },
+      "Locale": { "type": "string", "enum": ["zh-CN", "en", "ja", "ko"] }
+    }
+  },
+  "paths": {
+    "/api/v1/openapi.json": { "get": { "operationId": "getPublicOpenAPI", "responses": { "200": { "description": "OpenAPI document" } } } },
+    "/api/v1/locales": { "get": { "operationId": "listLocales", "responses": { "200": { "description": "Enabled locales" } } } },
+    "/api/v1/catalog": { "get": { "operationId": "getCatalog", "parameters": [{ "name": "locale", "in": "query", "schema": { "$ref": "#/components/schemas/Locale" } }], "responses": { "200": { "description": "Published catalog" } } } },
+    "/api/v1/submissions": { "post": { "operationId": "createSubmission", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Submission" } } } }, "responses": { "202": { "description": "Submission received" }, "400": { "description": "Invalid request" }, "429": { "description": "Rate limited" } } } },
+    "/api/v1/ad-applications": { "post": { "operationId": "createAdApplication", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdApplication" } } } }, "responses": { "202": { "description": "Advertising application received" } } } },
+    "/api/v1/submission-session": {
+      "post": { "operationId": "createSubmissionSession", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusToken" } } } }, "responses": { "201": { "description": "30-minute HttpOnly session and CSRF token" } } },
+      "delete": { "operationId": "deleteSubmissionSession", "security": [{ "submissionSession": [], "csrf": [] }], "responses": { "204": { "description": "Session revoked" } } }
+    },
+    "/api/v1/ad-application-session": {
+      "post": { "operationId": "createAdApplicationSession", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusToken" } } } }, "responses": { "201": { "description": "30-minute HttpOnly session and CSRF token" } } },
+      "delete": { "operationId": "deleteAdApplicationSession", "security": [{ "adApplicationSession": [], "csrf": [] }], "responses": { "204": { "description": "Session revoked" } } }
+    },
+    "/api/v1/submissions/me": {
+      "get": { "operationId": "getMySubmission", "security": [{ "submissionSession": [] }], "responses": { "200": { "description": "Current submission status" } } },
+      "patch": { "operationId": "updateMySubmission", "security": [{ "submissionSession": [], "csrf": [] }], "responses": { "200": { "description": "Requested changes submitted for review" } } }
+    },
+    "/api/v1/ad-applications/me": {
+      "get": { "operationId": "getMyAdApplication", "security": [{ "adApplicationSession": [] }], "responses": { "200": { "description": "Current advertising application status" } } },
+      "patch": { "operationId": "updateMyAdApplication", "security": [{ "adApplicationSession": [], "csrf": [] }], "responses": { "200": { "description": "Requested changes submitted for review" } } }
+    },
+    "/api/v1/submissions/me/checkout": { "post": { "operationId": "createSubmissionCheckout", "security": [{ "submissionSession": [], "csrf": [] }], "responses": { "201": { "description": "Stripe Checkout URL" } } } },
+    "/api/v1/ad-applications/me/checkout": { "post": { "operationId": "createAdCheckout", "security": [{ "adApplicationSession": [], "csrf": [] }], "responses": { "201": { "description": "Stripe Checkout URL" } } } },
+    "/api/v1/webhooks/stripe": { "post": { "operationId": "receiveStripeWebhook", "responses": { "200": { "description": "Webhook accepted" }, "400": { "description": "Invalid signature or payload" } } } }
+  }
+}

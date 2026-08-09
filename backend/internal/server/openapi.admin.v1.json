@@ -51,6 +51,25 @@
             "items": { "$ref": "#/components/schemas/ManualSiteLocalization" }
           }
         }
+      },
+      "ReviewRequest": {
+        "type": "object",
+        "properties": { "note": { "type": "string", "maxLength": 500 } }
+      },
+      "AssetRegisterRequest": {
+        "type": "object",
+        "required": ["external_id", "storage_key", "public_url", "content_hash", "mime_type", "size_bytes", "width", "height", "album"],
+        "properties": {
+          "external_id": { "type": "string" },
+          "storage_key": { "type": "string" },
+          "public_url": { "type": "string", "format": "uri" },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "mime_type": { "type": "string", "pattern": "^image/" },
+          "size_bytes": { "type": "integer", "minimum": 1 },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "album": { "type": "string", "const": "6url" }
+        }
       }
     }
   },
@@ -109,8 +128,32 @@
     "/admin/v1/submissions": {
       "get": { "operationId": "listSubmissions", "responses": { "200": { "description": "Listing submission queue" } } }
     },
+    "/admin/v1/submissions/{id}/preapprove": {
+      "post": { "operationId": "preapproveSubmission", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Preapproved; paid applications receive an order" }, "409": { "description": "Invalid state or unavailable offer" } } }
+    },
+    "/admin/v1/submissions/{id}/request-changes": {
+      "post": { "operationId": "requestSubmissionChanges", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Changes requested" } } }
+    },
+    "/admin/v1/submissions/{id}/reject": {
+      "post": { "operationId": "rejectSubmission", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Submission rejected" } } }
+    },
     "/admin/v1/ad-applications": {
       "get": { "operationId": "listAdApplications", "responses": { "200": { "description": "Sponsor advertising application queue" } } }
+    },
+    "/admin/v1/ad-applications/{id}/preapprove": {
+      "post": { "operationId": "preapproveAdApplication", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Preapproved with a sponsor order" } } }
+    },
+    "/admin/v1/ad-applications/{id}/request-changes": {
+      "post": { "operationId": "requestAdApplicationChanges", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Changes requested" } } }
+    },
+    "/admin/v1/ad-applications/{id}/reject": {
+      "post": { "operationId": "rejectAdApplication", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Advertising application rejected" } } }
+    },
+    "/admin/v1/assets/register": {
+      "post": { "operationId": "registerImgAntAsset", "description": "Registers metadata for an image already uploaded by local AI to the ImgAnt 6url album.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetRegisterRequest" } } } }, "responses": { "201": { "description": "Asset registered" } } }
+    },
+    "/admin/v1/ads/manual": {
+      "post": { "operationId": "createManualSponsorAd", "description": "Creates a free administrator-owned draft sponsor ad without an application or payment order.", "responses": { "201": { "description": "Draft sponsor ad created" } } }
     },
     "/admin/v1/ads": {
       "get": { "operationId": "listAds", "responses": { "200": { "description": "Sponsor advertisements" } } }

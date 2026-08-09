@@ -42,10 +42,10 @@ func runMigrate() {
 	}
 	defer client.Close()
 	defer sqlDB.Close()
-	if err := database.MigrateAndSeed(context.Background(), client); err != nil {
+	if err := database.MigrateAndSeed(context.Background(), client, cfg); err != nil {
 		log.Fatalf("database initialization failed: %v", err)
 	}
-	fmt.Println("database schema and locale seed are ready")
+	fmt.Println("database schema, locales, and commercial offers are ready")
 }
 
 func runTokenCreate(args []string) {

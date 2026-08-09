@@ -1998,10 +1998,22 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 - SQLite 集成测试覆盖 published revision 隔离、广告 locale 不回退、商业 rel 解析，以及管理员免费直录不产生订单。
 - MySQL 实例、生产邮件、Slack、Stripe 和 ImgAnt 使用项目所有者提供的环境配置后执行联调。
 
-### 29.3 下一批实现
+### 29.3 已完成申请与支付后端
 
-- Paid submission、Link exchange submission 和 Sponsor Ad application 的公开表单、状态 session 与管理审核 API。
-- ImgAnt asset 登记与引用保护。
+- 实现 Paid submission、Link exchange submission 与 Sponsor Ad application 公开 API；Turnstile、IP 限流、URL / locale / 反链域名校验和泛化 `202` 响应已经接入。
+- 实现两套独立状态 token audience、HMAC 数据库存储、fragment 状态链接、30 分钟 HttpOnly session、Origin + CSRF 写保护和申请人补充材料 API。
+- 实现后台预审、要求补充与拒绝 API；条件状态转换、管理员 token、审计日志、单一 active USD plan / offer 和订单价格权益快照处于同一事务。
+- 实现 UnoSend / Sendflare 邮件、Slack 管理员通知与 durable notification Worker；outbox payload 使用 AES-256-GCM，支持 claim、指数退避、stale 重入队、过期清理和成功后密文清除。
+- 实现 Stripe USD Checkout 与签名 webhook；支付完成由 webhook 推动订单及申请进入 `paid`，回跳参数不改变付款状态。
+- 实现 ImgAnt `6url` 相册资产登记和管理员免费 Sponsor Ad 草稿 API；管理员广告不创建 application 或 payment order。
+- 实现 listing / sponsor 商业套餐迁移种子，金额、期限、locale 与 Stripe Price ID 由环境变量写入 active offer。
+- 实现公开 API OpenAPI 3.1 文档并扩展管理 API 文档；新增流程由 SQLite 集成测试覆盖 token 不回传、状态 session、预审订单和通知副作用。
+
+### 29.4 下一批实现
+
 - 内容 preview / commit、ETag 更新、发布事务与 revalidation outbox Worker。
-- UnoSend / Sendflare 邮件、Slack 通知和 durable notification Worker。
-- Stripe USD Checkout、webhook、退款及 listing / ad 订单权益隔离。
+- Exchange 首次反链验证、每日定时复查、连续失败暂停和申请人主动 recheck。
+- Stripe 异步支付、Session 过期、退款和人工付款 / 退款管理 API。
+- Sponsor 用户付款后的广告内容发布、管理员广告启停 / 排序 / 到期操作和现有 4 个广告迁移。
+- 四语言公开路由、详情页、hreflang、sitemap、JSON-LD、GEO 来源和索引发布门槛。
+- 简单管理后台页面；后端 API 继续作为后台与本地 AI 的统一业务入口。

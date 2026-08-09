@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -17,18 +18,47 @@ import (
 	"github.com/forecho/6url/backend/ent/locale"
 	"github.com/forecho/6url/backend/internal/catalog"
 	"github.com/forecho/6url/backend/internal/config"
+	"github.com/forecho/6url/backend/internal/ratelimit"
+	"github.com/forecho/6url/backend/internal/securepayload"
+	"github.com/forecho/6url/backend/internal/stripeclient"
+	"github.com/forecho/6url/backend/internal/turnstile"
 )
 
+type StripeCheckout interface {
+	CreateCheckout(context.Context, stripeclient.CheckoutRequest) (stripeclient.CheckoutSession, error)
+}
+
 type Dependencies struct {
-	Config config.Config
-	Ent    *ent.Client
-	SQL    *sql.DB
+	Config        config.Config
+	Ent           *ent.Client
+	SQL           *sql.DB
+	Turnstile     turnstile.Verifier
+	RateLimiter   ratelimit.Limiter
+	PayloadSealer *securepayload.Sealer
+	Stripe        StripeCheckout
 }
 
 func New(deps Dependencies) *gin.Engine {
 	gin.SetMode(deps.Config.GinMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
+	if err := router.SetTrustedProxies(deps.Config.TrustedProxyCIDRs); err != nil {
+		panic("invalid trusted proxy configuration: " + err.Error())
+	}
+	if deps.Turnstile == nil {
+		deps.Turnstile = turnstile.Client{SecretKey: deps.Config.TurnstileSecretKey}
+	}
+	if deps.RateLimiter == nil {
+		deps.RateLimiter = ratelimit.NewMemory()
+	}
+	if deps.PayloadSealer == nil && deps.Config.NotificationEncryptionKey != "" {
+		if sealer, err := securepayload.New(deps.Config.NotificationEncryptionKey); err == nil {
+			deps.PayloadSealer = &sealer
+		}
+	}
+	if deps.Stripe == nil {
+		deps.Stripe = stripeclient.Client{SecretKey: deps.Config.StripeSecretKey}
+	}
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     deps.Config.CORSAllowedOrigins,
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
@@ -49,6 +79,7 @@ func New(deps Dependencies) *gin.Engine {
 	})
 
 	public := router.Group("/api/v1")
+	registerPublicApplicationRoutes(public, deps)
 	public.GET("/locales", func(c *gin.Context) {
 		rows, err := deps.Ent.Locale.Query().Where(locale.EnabledEQ(true)).Order(ent.Asc(locale.FieldSortOrder)).All(c.Request.Context())
 		if err != nil {

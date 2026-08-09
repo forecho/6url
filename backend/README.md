@@ -17,6 +17,7 @@ go run ./cmd/6url-admin migrate
 ```
 
 The API process never executes DDL during startup. Run the migration command once for each reviewed release before rolling out API instances.
+The same command seeds the single USD paid-listing plan and Sponsor Ad offer from the Stripe amount, duration and Price ID environment variables.
 
 Create a local administrator token after migration and after configuring `ADMIN_TOKEN_PEPPER`:
 
@@ -27,6 +28,15 @@ go run ./cmd/6url-admin token create \
 ```
 
 The raw token is printed once. Store it outside the repository.
+
+API contracts are available after startup:
+
+```text
+GET /api/v1/openapi.json
+GET /admin/v1/openapi.json
+```
+
+Public applications use Cloudflare Turnstile and Redis rate limiting. Status links carry their raw token in the URL fragment, exchange it for a 30-minute HttpOnly cookie, and require Origin plus `X-CSRF-Token` on status mutations and Checkout creation. Run the API process continuously so its durable notification worker can deliver UnoSend or Sendflare email and Slack outbox rows.
 
 Import the current JSON catalog as Chinese drafts with active editorial placements:
 

@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/forecho/6url/backend/ent"
+	"github.com/forecho/6url/backend/internal/config"
 )
 
 func TestMySQLSchemaMigrationSmoke(t *testing.T) {
@@ -20,7 +21,7 @@ func TestMySQLSchemaMigrationSmoke(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer client.Close()
-	if err := MigrateAndSeed(context.Background(), client); err != nil {
+	if err := MigrateAndSeed(context.Background(), client, config.Config{StripeAdDays: 30}); err != nil {
 		t.Fatal(err)
 	}
 	if got := client.Locale.Query().CountX(context.Background()); got != 4 {
