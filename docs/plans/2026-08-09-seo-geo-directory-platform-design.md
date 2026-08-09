@@ -1,6 +1,6 @@
 # 6URL SEO / GEO 导航平台改造方案
 
-> 状态：讨论稿，代码保持现状，评审通过后进入实施。
+> 状态：已评审，正在实施。当前实施分支：`codex/directory-platform-foundation`。
 
 **日期**：2026-08-09
 
@@ -10,7 +10,7 @@
 
 ## 1. 背景与现状
 
-当前项目采用 Next.js 13 Pages Router：
+改造开始前的项目采用 Next.js 13 Pages Router：
 
 - 网站配置来自 `pages/api/site.json`。
 - 分类和网站数据来自 `pages/api/resources.json`。
@@ -710,7 +710,8 @@ id
 slug unique
 canonical_name
 canonical_url
-normalized_url unique
+normalized_url
+normalized_url_hash unique
 canonical_domain
 canonical_registrable_domain
 status: draft | published | archived | removed
@@ -723,6 +724,8 @@ created_at / updated_at
 ```
 
 `canonical_url` 表示稳定官方目标。商业关系、追踪 URL 和链接资格属于 placement，避免商业状态污染网站实体。共享事实变化时递增 `facts_version`，各 locale 内容据此判断事实是否需要复核。
+
+MySQL 使用完整标准化 URL 的 SHA-256 作为唯一索引，完整 URL 继续保存在正文列中，避免 `utf8mb4 VARCHAR(2048)` 唯一索引超过 InnoDB 键长度上限。
 
 `sites` 中的 canonical、domain、Logo 等字段代表当前公开共享事实。此类修改使用两阶段 preview / commit，在正式提交事务中更新并递增 `facts_version`；申请素材与待确认建议保留在 submission 或 operation payload 中，不通过普通草稿 PATCH 覆盖公开事实。
 
@@ -1595,7 +1598,7 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 
 ### 18.1 导入流程
 
-1. 读取 `pages/api/site.json` 和 `pages/api/resources.json`。
+1. 读取迁移后的 `data/site.json` 和 `data/resources.json`；这两份文件原位于 `pages/api/`。
 2. 按最终跳转结果和 canonical 域名规范化 URL。
 3. 创建 categories。
 4. 创建 `zh-CN` category / site content revision，并把 locale draft pointer 指向导入版本。
@@ -1608,7 +1611,7 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 11. 从实际生产配置或生产数据导出中取得现有 4 个 Sponsor 广告的名称、目标 URL、图片、排序、状态、有效期和 locale 文案。
 12. 将确认后的 4 个广告导入 `ads` 与 `ad_localizations`，并逐语言对比迁移前后的首页广告输出。
 
-当前工作区源码只在 `pages/components/app.tsx` 包含 GitHub Sponsor 按钮；`pages/api/resources.json` 保存 6 个普通分类。线上 4 个广告的完整配置未进入当前版本库，因此迁移以实际生产配置或导出数据为唯一依据。
+源码盘点时只在 `pages/components/app.tsx` 找到 GitHub Sponsor 按钮，原 `pages/api/resources.json` 保存 6 个普通分类。实施阶段已分别迁移到 `components/app.tsx` 与 `data/resources.json`。线上 4 个广告的完整配置未进入当前版本库，因此迁移以实际生产配置或导出数据为唯一依据。
 
 ### 18.2 迁移质量策略
 
@@ -1970,3 +1973,35 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 - [ImgAnt API 文档](https://imgant.com/api-docs)：`POST /api/v1/api-upload`、`X-API-Key`、multipart `file` + `album`、`api-albums` 与 CLI `--album` 工作流。
 
 实施前再次核对搜索平台和支付平台的最新官方政策，并把变化写入 `/listing-policy` 与测试清单。
+
+## 29. 实施进度
+
+### 29.1 已完成基础
+
+- 建立 `backend/` Go 服务、Ent Schema、MySQL 连接、显式迁移命令和四语言种子数据；API 启动过程不执行 DDL。
+- 建立 category / site 不可变 revision 与 locale publication、placement、Sponsor Ad、两类申请、订单、后台 token、审计和 outbox 数据表。
+- 实现 `/healthz`、`/api/v1/locales`、`/api/v1/catalog`；catalog 只读取已发布 locale revision，并将 Sponsor 广告放入独立 `ads` 字段。
+- 实现 scoped administrator token、一次性显示 token 的本地 CLI、核心后台只读 API 和管理员免费直录网站 API。
+- 管理员免费直录通过事务创建 draft site、locale revision、editorial placement 与审计记录，不创建 submission 或 payment order。
+- 实现当前 JSON catalog 的幂等导入 CLI；导入内容保持中文草稿，现有 JSON 继续作为前台回退。
+- Next.js 首页支持 `SIXURL_CATALOG_SOURCE` 数据源开关、ISR 和 Sponsor 广告服务端渲染。
+- 组件移出 `pages/`，清除意外公开的 `/components/*` 路由。
+- 静态 JSON 移至 `data/`，清除由配置文件目录产生的无意义 `/api` 路由。
+- 建立当前管理接口的 OpenAPI 3.1 文档与前后端 CI。
+- 修复首轮代码审查发现的 MySQL 长 URL 唯一索引、revision 归属校验、商业实体 XOR 约束、后台逐路由 scope、运行时 JSON 快照回退和 registrable domain 规范化问题。
+- Next.js 升级到 15.5 安全维护版本，生产依赖审计清零。
+
+### 29.2 当前验证
+
+- Go：`go test ./...`、`go vet ./...`、两个 CLI / API 二进制构建通过。
+- Next.js：`yarn lint` 与 `yarn build` 通过。
+- SQLite 集成测试覆盖 published revision 隔离、广告 locale 不回退、商业 rel 解析，以及管理员免费直录不产生订单。
+- MySQL 实例、生产邮件、Slack、Stripe 和 ImgAnt 使用项目所有者提供的环境配置后执行联调。
+
+### 29.3 下一批实现
+
+- Paid submission、Link exchange submission 和 Sponsor Ad application 的公开表单、状态 session 与管理审核 API。
+- ImgAnt asset 登记与引用保护。
+- 内容 preview / commit、ETag 更新、发布事务与 revalidation outbox Worker。
+- UnoSend / Sendflare 邮件、Slack 通知和 durable notification Worker。
+- Stripe USD Checkout、webhook、退款及 listing / ad 订单权益隔离。

@@ -26,7 +26,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
+.env
 .env*.local
+
+# backend build artifacts
+/backend/6url-api
+/backend/6url-admin
 
 # vercel
 .vercel

@@ -20,7 +20,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### Configure your site
 
-Edit `pages/api/site.json` and `pages/api/resources.json` to configure your site.
+Edit `data/site.json` and `data/resources.json` to configure the legacy JSON source.
+
+The database migration keeps this JSON catalog as the default public source. Set `SIXURL_CATALOG_SOURCE=database` and `SIXURL_API_URL` after imported content has passed review and publication.
+
+Backend setup and administrator token commands are documented in `backend/README.md`.
+
+For a fresh backend database, run `6url-admin migrate` before creating an administrator token or importing the JSON catalog. Real environment files and credentials stay outside the repository; the committed `.env.example` files list every supported variable.
 
 ### Deploy on Vercel
 

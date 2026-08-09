@@ -1,8 +1,10 @@
 import Head from 'next/head'
-import {site,} from "./api";
-import App from './components/app';
+import { GetStaticProps } from 'next';
+import {site,} from "../data";
+import App from '../components/app';
+import { HomeCatalog, loadHomeCatalog } from '../lib/catalog';
 
-export default function Home() {
+export default function Home(catalog: HomeCatalog) {
     return (
         <>
             <Head>
@@ -10,7 +12,12 @@ export default function Home() {
                 <link rel="icon" href={site.favicon}/>
                 <title>{site.seo.title}</title>
             </Head>
-            <App/>
+            <App resources={catalog.resources} ads={catalog.ads}/>
         </>
     )
 }
+
+export const getStaticProps: GetStaticProps<HomeCatalog> = async () => {
+    const catalog = await loadHomeCatalog('zh-CN');
+    return { props: catalog, revalidate: 300 };
+};
