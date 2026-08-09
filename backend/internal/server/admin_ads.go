@@ -58,11 +58,13 @@ type publishAdRequest struct {
 }
 
 type commitAdRequest struct {
-	Status    string     `json:"status" binding:"required"`
-	SortOrder int        `json:"sort_order"`
-	StartsAt  *time.Time `json:"starts_at"`
-	EndsAt    *time.Time `json:"ends_at"`
-	Version   int        `json:"version" binding:"required"`
+	Status        string     `json:"status" binding:"required"`
+	SortOrder     *int       `json:"sort_order" binding:"required"`
+	StartsAt      *time.Time `json:"starts_at"`
+	EndsAt        *time.Time `json:"ends_at"`
+	ClearStartsAt bool       `json:"clear_starts_at"`
+	ClearEndsAt   bool       `json:"clear_ends_at"`
+	Version       int        `json:"version" binding:"required"`
 }
 
 func getAdminAd(c *gin.Context, deps Dependencies) {
@@ -279,17 +281,13 @@ func commitAd(c *gin.Context, deps Dependencies) {
 		return
 	}
 	var request commitAdRequest
-	if err := c.ShouldBindJSON(&request); err != nil || request.Version <= 0 {
+	if err := c.ShouldBindJSON(&request); err != nil || request.Version <= 0 || request.SortOrder == nil || (request.StartsAt != nil && request.ClearStartsAt) || (request.EndsAt != nil && request.ClearEndsAt) {
 		writeError(c, http.StatusBadRequest, "invalid_request", "The advertisement commit payload is invalid.")
 		return
 	}
 	status := ad.Status(strings.TrimSpace(request.Status))
 	if status != ad.StatusActive && status != ad.StatusPaused && status != ad.StatusCanceled {
 		writeError(c, http.StatusBadRequest, "invalid_status", "status must be active, paused, or canceled.")
-		return
-	}
-	if request.StartsAt != nil && request.EndsAt != nil && !request.EndsAt.After(*request.StartsAt) {
-		writeError(c, http.StatusBadRequest, "invalid_schedule", "ends_at must be later than starts_at.")
 		return
 	}
 	tx, err := deps.Ent.Tx(c.Request.Context())
@@ -315,8 +313,28 @@ func commitAd(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusConflict, "invalid_state", "An expired or canceled advertisement cannot be committed.")
 		return
 	}
-	if request.StartsAt != nil && request.EndsAt == nil && current.Origin == ad.OriginAdvertiser && current.EndsAt != nil && !current.EndsAt.After(*request.StartsAt) {
-		writeError(c, http.StatusBadRequest, "invalid_schedule", "starts_at must be earlier than the paid advertisement end time.")
+	if current.Origin == ad.OriginAdvertiser && (request.StartsAt != nil || request.EndsAt != nil || request.ClearStartsAt || request.ClearEndsAt) {
+		writeError(c, http.StatusConflict, "paid_schedule_immutable", "A paid advertisement schedule is fixed by its order entitlement.")
+		return
+	}
+	effectiveStartsAt := current.StartsAt
+	effectiveEndsAt := current.EndsAt
+	if request.ClearStartsAt {
+		effectiveStartsAt = nil
+	} else if request.StartsAt != nil {
+		effectiveStartsAt = request.StartsAt
+	}
+	if request.ClearEndsAt {
+		effectiveEndsAt = nil
+	} else if request.EndsAt != nil {
+		effectiveEndsAt = request.EndsAt
+	}
+	if effectiveStartsAt != nil && effectiveEndsAt != nil && !effectiveEndsAt.After(*effectiveStartsAt) {
+		writeError(c, http.StatusBadRequest, "invalid_schedule", "ends_at must be later than starts_at.")
+		return
+	}
+	if status == ad.StatusActive && effectiveEndsAt != nil && !effectiveEndsAt.After(time.Now().UTC()) {
+		writeError(c, http.StatusBadRequest, "expired_schedule", "An active advertisement must end in the future.")
 		return
 	}
 	if status == ad.StatusActive {
@@ -327,15 +345,15 @@ func commitAd(c *gin.Context, deps Dependencies) {
 			return
 		}
 	}
-	updater := tx.Ad.Update().Where(ad.IDEQ(id), ad.VersionEQ(request.Version), ad.StatusEQ(current.Status)).SetStatus(status).SetSortOrder(request.SortOrder).AddVersion(1)
+	updater := tx.Ad.Update().Where(ad.IDEQ(id), ad.VersionEQ(request.Version), ad.StatusEQ(current.Status)).SetStatus(status).SetSortOrder(*request.SortOrder).AddVersion(1)
 	if request.StartsAt != nil {
 		updater.SetStartsAt(*request.StartsAt)
-	} else {
+	} else if request.ClearStartsAt {
 		updater.ClearStartsAt()
 	}
 	if request.EndsAt != nil {
 		updater.SetEndsAt(*request.EndsAt)
-	} else if current.Origin == ad.OriginAdmin {
+	} else if request.ClearEndsAt {
 		updater.ClearEndsAt()
 	}
 	changed, err := updater.Save(c.Request.Context())
@@ -343,7 +361,7 @@ func commitAd(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusConflict, "concurrent_update", "The advertisement changed while it was being committed.")
 		return
 	}
-	diff, _ := json.Marshal(map[string]any{"from": current.Status, "to": status, "sort_order": request.SortOrder, "starts_at": request.StartsAt, "ends_at": request.EndsAt})
+	diff, _ := json.Marshal(map[string]any{"from": current.Status, "to": status, "sort_order": *request.SortOrder, "starts_at": effectiveStartsAt, "ends_at": effectiveEndsAt})
 	if _, err := tx.AdminAuditLog.Create().SetAdminAPITokenID(adminIdentity(c).ID).SetAction("ad.commit").SetResourceType("ad").SetResourceID(strconv.Itoa(id)).SetDiffSummaryJSON(string(diff)).SetReason("committed sponsor advertisement state").Save(c.Request.Context()); err != nil {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to write the advertisement audit log.")
 		return

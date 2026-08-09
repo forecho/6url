@@ -57,6 +57,20 @@ func TestPaidSponsorPublicationIsAtomic(t *testing.T) {
 	if client.AdminAuditLog.Query().CountX(ctx) != 1 || client.RevalidationJob.Query().CountX(ctx) != 1 || client.NotificationDelivery.Query().CountX(ctx) != 1 {
 		t.Fatal("advertisement publication side effects are incomplete")
 	}
+	extendedEnd := time.Now().UTC().Add(60 * 24 * time.Hour)
+	commitBody, _ := json.Marshal(map[string]any{"status": "paused", "sort_order": 20, "ends_at": extendedEnd, "version": adRow.Version})
+	commitRequest := httptest.NewRequest(http.MethodPost, "/admin/v1/ads/"+strconv.Itoa(adRow.ID)+"/commit", bytes.NewReader(commitBody))
+	commitRequest.Header.Set("Authorization", "Bearer "+rawAdmin)
+	commitRequest.Header.Set("Content-Type", "application/json")
+	commitRequest.Header.Set("If-Match", adETag(adRow.ID, adRow.Version))
+	commitResponse := httptest.NewRecorder()
+	router.ServeHTTP(commitResponse, commitRequest)
+	if commitResponse.Code != http.StatusConflict {
+		t.Fatalf("paid schedule mutation status=%d body=%s", commitResponse.Code, commitResponse.Body.String())
+	}
+	if updated := client.Ad.GetX(ctx, adRow.ID); updated.Status != ad.StatusActive || updated.Version != adRow.Version || updated.EndsAt == nil || !updated.EndsAt.Equal(*adRow.EndsAt) {
+		t.Fatalf("paid schedule changed after rejected commit: %#v", updated)
+	}
 }
 
 func TestManualSponsorCommitRequiresMatchingVersion(t *testing.T) {
@@ -65,7 +79,9 @@ func TestManualSponsorCommitRequiresMatchingVersion(t *testing.T) {
 	defer client.Close()
 	ctx := context.Background()
 	assetRow := client.Asset.Create().SetProvider("imgant").SetAlbum("6url").SetExternalID("image-2").SetStorageKey("6url/image-2.webp").SetPublicURL("https://cdn.imgant.com/image-2.webp").SetContentHash("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb").SetMimeType("image/webp").SetSizeBytes(1024).SetWidth(1200).SetHeight(630).SaveX(ctx)
-	adRow := client.Ad.Create().SetStatus(ad.StatusDraft).SetTargetURL("https://example.com").SetImageAssetID(assetRow.ID).SetOrigin(ad.OriginAdmin).SaveX(ctx)
+	startsAt := time.Now().UTC().Add(time.Hour)
+	endsAt := startsAt.Add(24 * time.Hour)
+	adRow := client.Ad.Create().SetStatus(ad.StatusDraft).SetTargetURL("https://example.com").SetImageAssetID(assetRow.ID).SetOrigin(ad.OriginAdmin).SetStartsAt(startsAt).SetEndsAt(endsAt).SaveX(ctx)
 	for _, item := range sponsorLocalizations() {
 		client.AdLocalization.Create().SetAdID(adRow.ID).SetLocale(item["locale"]).SetTitle(item["title"]).SetDescription(item["description"]).SetCtaLabel(item["cta_label"]).SetAltText(item["alt_text"]).SaveX(ctx)
 	}
@@ -84,7 +100,7 @@ func TestManualSponsorCommitRequiresMatchingVersion(t *testing.T) {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
 	updated := client.Ad.GetX(ctx, adRow.ID)
-	if updated.Status != ad.StatusActive || updated.Version != 2 || client.RevalidationJob.Query().CountX(ctx) != 1 {
+	if updated.Status != ad.StatusActive || updated.Version != 2 || updated.StartsAt == nil || !updated.StartsAt.Equal(startsAt) || updated.EndsAt == nil || !updated.EndsAt.Equal(endsAt) || client.RevalidationJob.Query().CountX(ctx) != 1 {
 		t.Fatalf("unexpected committed ad: %#v", updated)
 	}
 }

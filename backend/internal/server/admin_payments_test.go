@@ -132,6 +132,48 @@ func TestSuccessfulListingRefundEndsPlacementAndKeepsSite(t *testing.T) {
 	}
 }
 
+func TestManualMarkPaidRetryIsIdempotent(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	client := enttest.Open(t, dialect.SQLite, "file:manual-mark-paid-idempotent?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+	ctx := context.Background()
+	application := client.Submission.Create().SetPublicTokenHash("manual-paid-token").SetType(submission.TypePaid).SetStatus(submission.StatusAwaitingPayment).SetApplicantEmail("owner@example.com").SetApplicantName("Owner").SetPreferredLocale("en").SetRawName("Example").SetRawURL("https://example.com").SetNormalizedURL("https://example.com").SetNormalizedRegistrableDomain("example.com").SetRawDescription("Description").SaveX(ctx)
+	plan := client.ListingPlan.Create().SetCode("manual-listing").SetName("Manual listing").SetAmountMinor(1500).SetCurrency("usd").SaveX(ctx)
+	order := client.PaymentOrder.Create().SetPurpose(paymentorder.PurposeListing).SetSubmissionID(application.ID).SetListingPlanID(plan.ID).SetProvider(paymentorder.ProviderManual).SetStatus(paymentorder.StatusPendingManual).SetAmountMinor(1500).SetCurrency("usd").SaveX(ctx)
+	pepper := "01234567890123456789012345678901"
+	rawAdmin, prefix, _ := admintoken.Generate()
+	client.AdminAPIToken.Create().SetName("finance").SetPrefix(prefix).SetTokenHash(admintoken.Hash(rawAdmin, pepper)).SetScopes([]string{"payments:write"}).SaveX(ctx)
+	sealer, _ := securepayload.New(base64.StdEncoding.EncodeToString(make([]byte, 32)))
+	router := New(Dependencies{Config: config.Config{GinMode: gin.TestMode, CORSAllowedOrigins: []string{"https://6url.net"}, AdminTokenPepper: pepper}, Ent: client, PayloadSealer: &sealer})
+	for attempt := 1; attempt <= 2; attempt++ {
+		request := httptest.NewRequest(http.MethodPost, "/admin/v1/orders/"+strconv.Itoa(order.ID)+"/mark-paid", bytes.NewBufferString(`{"external_ref":" bank-ref-1 ","note":"bank transfer confirmed"}`))
+		request.Header.Set("Authorization", "Bearer "+rawAdmin)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Idempotency-Key", "manual-payment-order-1")
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("attempt=%d status=%d body=%s", attempt, response.Code, response.Body.String())
+		}
+	}
+	conflictRequest := httptest.NewRequest(http.MethodPost, "/admin/v1/orders/"+strconv.Itoa(order.ID)+"/mark-paid", bytes.NewBufferString(`{"external_ref":"bank-ref-1","note":"different audit note"}`))
+	conflictRequest.Header.Set("Authorization", "Bearer "+rawAdmin)
+	conflictRequest.Header.Set("Content-Type", "application/json")
+	conflictRequest.Header.Set("Idempotency-Key", "manual-payment-order-1")
+	conflictResponse := httptest.NewRecorder()
+	router.ServeHTTP(conflictResponse, conflictRequest)
+	if conflictResponse.Code != http.StatusConflict {
+		t.Fatalf("idempotency conflict status=%d body=%s", conflictResponse.Code, conflictResponse.Body.String())
+	}
+	updated := client.PaymentOrder.GetX(ctx, order.ID)
+	if updated.Status != paymentorder.StatusPaid || updated.ExternalRef == nil || *updated.ExternalRef != "bank-ref-1" || client.Submission.GetX(ctx, application.ID).Status != submission.StatusPaid {
+		t.Fatalf("unexpected manual payment state: %#v", updated)
+	}
+	if client.PaymentEvent.Query().CountX(ctx) != 1 || client.AdminAuditLog.Query().CountX(ctx) != 1 || client.NotificationDelivery.Query().CountX(ctx) != 1 {
+		t.Fatal("manual payment retry duplicated side effects")
+	}
+}
+
 func createRefundableSponsor(t *testing.T, client *ent.Client, status paymentorder.Status, externalRef *string) (*ent.AdApplication, *ent.PaymentOrder, *ent.Ad) {
 	t.Helper()
 	ctx := context.Background()

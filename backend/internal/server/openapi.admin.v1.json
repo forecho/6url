@@ -107,12 +107,14 @@
       },
       "CommitAdRequest": {
         "type": "object",
-        "required": ["status", "version"],
+        "required": ["status", "sort_order", "version"],
         "properties": {
           "status": { "type": "string", "enum": ["active", "paused", "canceled"] },
           "sort_order": { "type": "integer" },
-          "starts_at": { "type": ["string", "null"], "format": "date-time" },
-          "ends_at": { "type": ["string", "null"], "format": "date-time" },
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" },
+          "clear_starts_at": { "type": "boolean", "default": false },
+          "clear_ends_at": { "type": "boolean", "default": false },
           "version": { "type": "integer", "minimum": 1 }
         }
       },
@@ -217,7 +219,7 @@
       "post": { "operationId": "createManualSponsorAd", "description": "Creates a free administrator-owned draft sponsor ad without an application or payment order.", "responses": { "201": { "description": "Draft sponsor ad created" } } }
     },
     "/admin/v1/ads/{id}/commit": {
-      "post": { "operationId": "commitAd", "description": "Commits advertisement state, schedule and sort order with optimistic concurrency and homepage revalidation.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "If-Match", "in": "header", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommitAdRequest" } } } }, "responses": { "200": { "description": "Advertisement committed" }, "412": { "description": "Version or ETag mismatch" } } }
+      "post": { "operationId": "commitAd", "description": "Commits advertisement state, schedule and sort order with optimistic concurrency and homepage revalidation. Omitted schedule fields are preserved; clear flags apply only to administrator-owned ads; advertiser schedules remain fixed by the paid order.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }, { "name": "If-Match", "in": "header", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommitAdRequest" } } } }, "responses": { "200": { "description": "Advertisement committed" }, "409": { "description": "Paid schedule mutation rejected" }, "412": { "description": "Version or ETag mismatch" } } }
     },
     "/admin/v1/placements/{id}/recheck": {
       "post": { "operationId": "recheckExchangePlacement", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Backlink checked and placement health updated" }, "404": { "description": "Exchange placement not found" } } }

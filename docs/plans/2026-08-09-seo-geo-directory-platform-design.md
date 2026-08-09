@@ -2030,8 +2030,8 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 
 - 完成付费 Sponsor 上刊 API：仅接受 `paid` 申请和唯一已付款广告订单，将健康 ImgAnt `6url` 素材、四语言 localization、订单期限快照、active 广告、申请 `published` 状态、审计、邮件 / Slack 通知及首页 revalidation job 在同一事务提交。
 - 上刊邮件包含线上展示页、开始时间和结束时间；广告状态 API 返回订单退款时间及广告展示状态、期限和 version。
-- 完成管理员免费广告的 `commit`：支持 active、paused、canceled、排序与展示时间，使用 ETag、`If-Match` 和 version 防止后台与本地 AI 并发覆盖；commit 同事务刷新四语言首页。
+- 完成管理员免费广告的 `commit`：支持 active、paused、canceled、排序与展示时间，使用 ETag、`If-Match` 和 version 防止后台与本地 AI 并发覆盖；省略排期字段时保留原值，显式 clear 仅适用于管理员广告，用户付费广告排期由订单权益锁定；commit 同事务刷新四语言首页。
 - 完成广告到期 Worker：条件更新到期 active 广告为 `expired`，写审计与首页刷新；广告主收到到期邮件，管理员可通过 Slack outbox 获知状态。
 - 完成 Stripe 全额退款 API 和 `refund.updated`：同步成功时撤销 paid placement 或 Sponsor 广告，异步退款使用 `refund_pending`；成功后下架权益、保留网站内容、写通知与刷新任务，失败或取消时恢复订单为 `paid`。
-- 完成人工订单 `mark-paid` API；仅允许 `provider=manual,status=pending_manual`，要求 `Idempotency-Key`、外部付款引用和审计说明。
+- 完成人工订单 `mark-paid` API；仅允许 `provider=manual,status=pending_manual`，要求 `Idempotency-Key`、外部付款引用和审计说明；相同 key 与相同请求安全重试，key 复用于不同请求时返回冲突。
 - SQLite 集成测试覆盖付费广告原子上刊、管理员广告乐观并发 commit、广告到期、同步退款下架和异步退款 webhook 完成。

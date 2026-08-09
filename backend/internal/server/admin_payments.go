@@ -14,6 +14,7 @@ import (
 
 	"github.com/forecho/6url/backend/ent"
 	"github.com/forecho/6url/backend/ent/ad"
+	"github.com/forecho/6url/backend/ent/paymentevent"
 	"github.com/forecho/6url/backend/ent/paymentorder"
 	"github.com/forecho/6url/backend/ent/placement"
 	"github.com/forecho/6url/backend/ent/placementlocale"
@@ -58,12 +59,27 @@ func markManualOrderPaid(c *gin.Context, deps Dependencies) {
 		}
 		return
 	}
+	externalRef := strings.TrimSpace(request.ExternalRef)
+	note := strings.TrimSpace(request.Note)
+	eventID := "manual-paid:" + strconv.Itoa(order.ID) + ":" + idempotencyDigest(key)
+	eventPayload := "request_sha256:" + stringDigest(externalRef+"\x00"+note)
+	if event, err := tx.PaymentEvent.Query().Where(paymentevent.EventIDEQ(eventID)).Only(c.Request.Context()); err == nil {
+		if order.Provider != paymentorder.ProviderManual || order.Status != paymentorder.StatusPaid || event.PayloadEncryptedOrRedacted != eventPayload {
+			writeError(c, http.StatusConflict, "idempotency_conflict", "Idempotency-Key was already used with different payment data.")
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"id": order.ID, "status": order.Status, "paid_at": order.PaidAt})
+		return
+	} else if !ent.IsNotFound(err) {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to verify the manual payment idempotency key.")
+		return
+	}
 	if order.Provider != paymentorder.ProviderManual || order.Status != paymentorder.StatusPendingManual {
 		writeError(c, http.StatusConflict, "invalid_state", "Only a pending manual payment order can be marked paid.")
 		return
 	}
 	now := time.Now().UTC()
-	changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusEQ(paymentorder.StatusPendingManual), paymentorder.ProviderEQ(paymentorder.ProviderManual)).SetStatus(paymentorder.StatusPaid).SetPaidAt(now).SetExternalRef(strings.TrimSpace(request.ExternalRef)).Save(c.Request.Context())
+	changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusEQ(paymentorder.StatusPendingManual), paymentorder.ProviderEQ(paymentorder.ProviderManual)).SetStatus(paymentorder.StatusPaid).SetPaidAt(now).SetExternalRef(externalRef).Save(c.Request.Context())
 	if err != nil || changed != 1 {
 		writeError(c, http.StatusConflict, "concurrent_update", "The payment order changed while it was being marked paid.")
 		return
@@ -74,12 +90,11 @@ func markManualOrderPaid(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusConflict, "invalid_application_state", "The application is not ready for a manual payment confirmation.")
 		return
 	}
-	eventID := "manual-paid:" + strconv.Itoa(order.ID) + ":" + idempotencyDigest(key)
-	if _, err := tx.PaymentEvent.Create().SetProvider("manual").SetEventID(eventID).SetType("admin.order.mark_paid").SetPayloadEncryptedOrRedacted("external_ref_sha256:" + stringDigest(request.ExternalRef)).SetReceivedAt(now).SetProcessedAt(now).Save(c.Request.Context()); err != nil {
+	if _, err := tx.PaymentEvent.Create().SetProvider("manual").SetEventID(eventID).SetType("admin.order.mark_paid").SetPayloadEncryptedOrRedacted(eventPayload).SetReceivedAt(now).SetProcessedAt(now).Save(c.Request.Context()); err != nil {
 		writeError(c, http.StatusConflict, "idempotency_conflict", "This manual payment operation was already recorded.")
 		return
 	}
-	if _, err := tx.AdminAuditLog.Create().SetAdminAPITokenID(adminIdentity(c).ID).SetAction("order.mark_paid").SetResourceType("payment_order").SetResourceID(strconv.Itoa(order.ID)).SetIdempotencyKey(key).SetReason(strings.TrimSpace(request.Note)).Save(c.Request.Context()); err != nil {
+	if _, err := tx.AdminAuditLog.Create().SetAdminAPITokenID(adminIdentity(c).ID).SetAction("order.mark_paid").SetResourceType("payment_order").SetResourceID(strconv.Itoa(order.ID)).SetIdempotencyKey(key).SetReason(note).Save(c.Request.Context()); err != nil {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to write the payment audit log.")
 		return
 	}
