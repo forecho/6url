@@ -76,6 +76,7 @@
       "patch": { "operationId": "updateMyAdApplication", "security": [{ "adApplicationSession": [], "csrf": [] }], "responses": { "200": { "description": "Requested changes submitted for review" } } }
     },
     "/api/v1/submissions/me/checkout": { "post": { "operationId": "createSubmissionCheckout", "security": [{ "submissionSession": [], "csrf": [] }], "responses": { "201": { "description": "Stripe Checkout URL" } } } },
+    "/api/v1/submissions/me/recheck": { "post": { "operationId": "recheckSubmissionBacklink", "description": "Runs an SSRF-safe reciprocal-link check. Published placements persist history and suspend after three consecutive missing or blocked checks.", "security": [{ "submissionSession": [], "csrf": [] }], "responses": { "200": { "description": "Backlink check result" }, "429": { "description": "Rate limited" } } } },
     "/api/v1/ad-applications/me/checkout": { "post": { "operationId": "createAdCheckout", "security": [{ "adApplicationSession": [], "csrf": [] }], "responses": { "201": { "description": "Stripe Checkout URL" } } } },
     "/api/v1/webhooks/stripe": { "post": { "operationId": "receiveStripeWebhook", "responses": { "200": { "description": "Webhook accepted" }, "400": { "description": "Invalid signature or payload" } } } }
   }

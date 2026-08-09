@@ -28,6 +28,7 @@ func TestValidateProductionOrigins(t *testing.T) {
 		SlackBotToken: "slack", SlackChannelID: "channel", AdminNotifyChannels: []string{"slack"},
 		StripeSecretKey: "stripe", StripeWebhookSecret: "webhook", StripeListingPriceID: "price_listing", StripeAdPriceID: "price_ad",
 		StripeListingAmount: 1000, StripeAdAmount: 2000, StripeAdDays: 30,
+		RevalidationWebhookURL: "https://6url.net/api/internal/revalidate", RevalidationSecret: "01234567890123456789012345678901",
 	}
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v", err)

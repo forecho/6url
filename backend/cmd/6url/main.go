@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/forecho/6url/backend/internal/backlink"
 	"github.com/forecho/6url/backend/internal/config"
 	"github.com/forecho/6url/backend/internal/database"
 	"github.com/forecho/6url/backend/internal/notifications"
 	"github.com/forecho/6url/backend/internal/ratelimit"
+	"github.com/forecho/6url/backend/internal/revalidation"
 	"github.com/forecho/6url/backend/internal/securepayload"
 	"github.com/forecho/6url/backend/internal/server"
 )
@@ -42,14 +44,19 @@ func main() {
 	rootCtx, cancelRoot := context.WithCancel(context.Background())
 	defer cancelRoot()
 	var sealerDependency *securepayload.Sealer
+	backlinkChecker := backlink.Client{}
 	if sealerErr == nil {
 		sealerDependency = &sealer
 		go notifications.NewWorker(client, cfg, sealer).Run(rootCtx)
+		go (backlink.Worker{Monitor: backlink.Monitor{Client: client, Checker: backlinkChecker, TargetURL: cfg.AppBaseURL, Sealer: &sealer, SlackChannelID: cfg.SlackChannelID}}).Run(rootCtx)
 	} else {
 		log.Printf("notification worker disabled: %v", sealerErr)
 	}
+	if cfg.RevalidationWebhookURL != "" && cfg.RevalidationSecret != "" {
+		go (revalidation.Worker{Client: client, Endpoint: cfg.RevalidationWebhookURL, Secret: cfg.RevalidationSecret}).Run(rootCtx)
+	}
 
-	httpServer := &http.Server{Addr: ":" + cfg.HTTPPort, Handler: server.New(server.Dependencies{Config: cfg, Ent: client, SQL: sqlDB, RateLimiter: limiter, PayloadSealer: sealerDependency}), ReadHeaderTimeout: 10 * time.Second}
+	httpServer := &http.Server{Addr: ":" + cfg.HTTPPort, Handler: server.New(server.Dependencies{Config: cfg, Ent: client, SQL: sqlDB, RateLimiter: limiter, PayloadSealer: sealerDependency, Backlinks: backlinkChecker}), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		log.Printf("6URL API listening on :%s", cfg.HTTPPort)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

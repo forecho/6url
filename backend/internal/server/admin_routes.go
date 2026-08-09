@@ -46,6 +46,7 @@ type manualSiteLocalization struct {
 }
 
 func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
+	admin.Use(limitRequestBody(512 << 10))
 	admin.GET("/openapi.json", serveAdminOpenAPI)
 	admin.GET("/categories", requireScope("catalog:read"), func(c *gin.Context) {
 		rows, err := deps.Ent.Category.Query().Order(ent.Asc(category.FieldSortOrder), ent.Asc(category.FieldID)).Limit(pageSize(c)).All(c.Request.Context())
@@ -107,6 +108,8 @@ func registerAdminRoutes(admin *gin.RouterGroup, deps Dependencies) {
 	admin.POST("/submissions/:id/preapprove", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "preapprove") })
 	admin.POST("/submissions/:id/request-changes", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "request_changes") })
 	admin.POST("/submissions/:id/reject", requireScope("submissions:review"), func(c *gin.Context) { reviewSubmission(c, deps, "reject") })
+	admin.POST("/submissions/:id/publish", requireScope("content:publish"), func(c *gin.Context) { publishSubmission(c, deps) })
+	admin.POST("/placements/:id/recheck", requireScope("placements:write"), func(c *gin.Context) { recheckAdminPlacement(c, deps) })
 	admin.POST("/ad-applications/:id/preapprove", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "preapprove") })
 	admin.POST("/ad-applications/:id/request-changes", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "request_changes") })
 	admin.POST("/ad-applications/:id/reject", requireScope("ad_applications:review"), func(c *gin.Context) { reviewAdApplication(c, deps, "reject") })

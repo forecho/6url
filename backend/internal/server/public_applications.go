@@ -3,7 +3,7 @@ package server
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/mail"
 	"sort"
@@ -18,6 +18,8 @@ import (
 	"github.com/forecho/6url/backend/ent/applicationsession"
 	"github.com/forecho/6url/backend/ent/category"
 	"github.com/forecho/6url/backend/ent/notificationdelivery"
+	"github.com/forecho/6url/backend/ent/paymentorder"
+	"github.com/forecho/6url/backend/ent/placement"
 	"github.com/forecho/6url/backend/ent/site"
 	"github.com/forecho/6url/backend/ent/submission"
 	"github.com/forecho/6url/backend/internal/publictoken"
@@ -94,17 +96,18 @@ type notificationPayload struct {
 
 func registerPublicApplicationRoutes(public *gin.RouterGroup, deps Dependencies) {
 	public.GET("/openapi.json", servePublicOpenAPI)
-	public.POST("/submissions", func(c *gin.Context) { createSubmission(c, deps) })
-	public.POST("/ad-applications", func(c *gin.Context) { createAdApplication(c, deps) })
-	public.POST("/submission-session", func(c *gin.Context) { exchangeSubmissionSession(c, deps) })
+	public.POST("/submissions", limitRequestBody(64<<10), func(c *gin.Context) { createSubmission(c, deps) })
+	public.POST("/ad-applications", limitRequestBody(64<<10), func(c *gin.Context) { createAdApplication(c, deps) })
+	public.POST("/submission-session", limitRequestBody(4<<10), func(c *gin.Context) { exchangeSubmissionSession(c, deps) })
 	public.DELETE("/submission-session", func(c *gin.Context) { deleteApplicationSession(c, deps, "submission") })
 	public.GET("/submissions/me", func(c *gin.Context) { getSubmissionStatus(c, deps) })
-	public.PATCH("/submissions/me", func(c *gin.Context) { updateSubmission(c, deps) })
-	public.POST("/ad-application-session", func(c *gin.Context) { exchangeAdSession(c, deps) })
+	public.PATCH("/submissions/me", limitRequestBody(64<<10), func(c *gin.Context) { updateSubmission(c, deps) })
+	public.POST("/ad-application-session", limitRequestBody(4<<10), func(c *gin.Context) { exchangeAdSession(c, deps) })
 	public.DELETE("/ad-application-session", func(c *gin.Context) { deleteApplicationSession(c, deps, "ad_application") })
 	public.GET("/ad-applications/me", func(c *gin.Context) { getAdApplicationStatus(c, deps) })
-	public.PATCH("/ad-applications/me", func(c *gin.Context) { updateAdApplication(c, deps) })
+	public.PATCH("/ad-applications/me", limitRequestBody(64<<10), func(c *gin.Context) { updateAdApplication(c, deps) })
 	public.POST("/submissions/me/checkout", func(c *gin.Context) { createCheckout(c, deps, "submission") })
+	public.POST("/submissions/me/recheck", func(c *gin.Context) { recheckMySubmission(c, deps) })
 	public.POST("/ad-applications/me/checkout", func(c *gin.Context) { createCheckout(c, deps, "ad_application") })
 	public.POST("/webhooks/stripe", func(c *gin.Context) { receiveStripeWebhook(c, deps) })
 }
@@ -150,7 +153,7 @@ func createSubmission(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusBadRequest, "invalid_category", "The selected category is unavailable.")
 		return
 	}
-	pending, err := deps.Ent.Submission.Query().Where(submission.NormalizedRegistrableDomainEQ(normalized.RegistrableDomain), submission.StatusIn(submission.StatusReceived, submission.StatusNeedsChanges, submission.StatusPreapproved, submission.StatusExchangeVerification, submission.StatusAwaitingPayment)).Exist(c.Request.Context())
+	pending, err := deps.Ent.Submission.Query().Where(submission.NormalizedRegistrableDomainEQ(normalized.RegistrableDomain), submission.StatusIn(submission.StatusReceived, submission.StatusNeedsChanges, submission.StatusPreapproved, submission.StatusExchangeVerification, submission.StatusAwaitingPayment, submission.StatusPaid)).Exist(c.Request.Context())
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to receive the submission.")
 		return
@@ -261,11 +264,12 @@ func createAdApplication(c *gin.Context, deps Dependencies) {
 }
 
 func exchangeSubmissionSession(c *gin.Context, deps Dependencies) {
+	if !allowRequest(c, deps, "submission:session", 10, time.Hour) {
+		return
+	}
 	var request sessionExchangeRequest
-	if err := c.ShouldBindJSON(&request); err != nil || !publictoken.ValidShape(request.Token, publictoken.Submission) || !allowRequest(c, deps, "submission:session", 10, time.Hour) {
-		if !c.IsAborted() {
-			writeError(c, http.StatusUnauthorized, "invalid_token", "The submission status token is invalid.")
-		}
+	if err := c.ShouldBindJSON(&request); err != nil || !publictoken.ValidShape(request.Token, publictoken.Submission) {
+		writeError(c, http.StatusUnauthorized, "invalid_token", "The submission status token is invalid.")
 		return
 	}
 	row, err := deps.Ent.Submission.Query().Where(submission.PublicTokenHashEQ(publictoken.Hash(request.Token, deps.Config.ApplicationTokenPepper, publictoken.Submission))).Only(c.Request.Context())
@@ -282,11 +286,12 @@ func exchangeSubmissionSession(c *gin.Context, deps Dependencies) {
 }
 
 func exchangeAdSession(c *gin.Context, deps Dependencies) {
+	if !allowRequest(c, deps, "ad_application:session", 10, time.Hour) {
+		return
+	}
 	var request sessionExchangeRequest
-	if err := c.ShouldBindJSON(&request); err != nil || !publictoken.ValidShape(request.Token, publictoken.AdApplication) || !allowRequest(c, deps, "ad_application:session", 10, time.Hour) {
-		if !c.IsAborted() {
-			writeError(c, http.StatusUnauthorized, "invalid_token", "The advertising application status token is invalid.")
-		}
+	if err := c.ShouldBindJSON(&request); err != nil || !publictoken.ValidShape(request.Token, publictoken.AdApplication) {
+		writeError(c, http.StatusUnauthorized, "invalid_token", "The advertising application status token is invalid.")
 		return
 	}
 	row, err := deps.Ent.AdApplication.Query().Where(adapplication.PublicTokenHashEQ(publictoken.Hash(request.Token, deps.Config.ApplicationTokenPepper, publictoken.AdApplication))).Only(c.Request.Context())
@@ -343,7 +348,20 @@ func getSubmissionStatus(c *gin.Context, deps Dependencies) {
 		return
 	}
 	c.Header("Cache-Control", "private, no-store")
-	c.JSON(http.StatusOK, gin.H{"id": row.ID, "type": row.Type, "status": row.Status, "name": row.RawName, "url": row.NormalizedURL, "preferred_locale": row.PreferredLocale, "review_note": row.ReviewNote, "submitted_at": row.SubmittedAt, "reviewed_at": row.ReviewedAt, "updated_at": row.UpdatedAt})
+	response := gin.H{"id": row.ID, "type": row.Type, "status": row.Status, "name": row.RawName, "url": row.NormalizedURL, "preferred_locale": row.PreferredLocale, "review_note": row.ReviewNote, "submitted_at": row.SubmittedAt, "reviewed_at": row.ReviewedAt, "updated_at": row.UpdatedAt}
+	if placementRow, err := deps.Ent.Placement.Query().Where(placement.SubmissionIDEQ(row.ID)).Order(ent.Desc(placement.FieldID)).First(c.Request.Context()); err == nil {
+		response["placement"] = gin.H{"id": placementRow.ID, "kind": placementRow.Kind, "status": placementRow.Status, "ends_at": placementRow.EndsAt, "last_check_status": placementRow.LastCheckStatus, "last_checked_at": placementRow.LastCheckedAt, "consecutive_failures": placementRow.ConsecutiveFailures, "suspended_reason": placementRow.SuspendedReason}
+	} else if !ent.IsNotFound(err) {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the submission placement.")
+		return
+	}
+	if orderRow, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.SubmissionIDEQ(row.ID)).Order(ent.Desc(paymentorder.FieldID)).First(c.Request.Context()); err == nil {
+		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt}
+	} else if !ent.IsNotFound(err) {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the submission payment.")
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func getAdApplicationStatus(c *gin.Context, deps Dependencies) {
@@ -357,7 +375,14 @@ func getAdApplicationStatus(c *gin.Context, deps Dependencies) {
 		return
 	}
 	c.Header("Cache-Control", "private, no-store")
-	c.JSON(http.StatusOK, gin.H{"id": row.ID, "status": row.Status, "title": row.RawTitle, "target_url": row.TargetURL, "requested_locales": row.RequestedLocales, "preferred_locale": row.PreferredLocale, "review_note": row.ReviewNote, "created_at": row.CreatedAt, "updated_at": row.UpdatedAt})
+	response := gin.H{"id": row.ID, "status": row.Status, "title": row.RawTitle, "target_url": row.TargetURL, "requested_locales": row.RequestedLocales, "preferred_locale": row.PreferredLocale, "review_note": row.ReviewNote, "created_at": row.CreatedAt, "updated_at": row.UpdatedAt}
+	if orderRow, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.AdApplicationIDEQ(row.ID)).Order(ent.Desc(paymentorder.FieldID)).First(c.Request.Context()); err == nil {
+		response["payment"] = gin.H{"order_id": orderRow.ID, "status": orderRow.Status, "amount_minor": orderRow.AmountMinor, "currency": orderRow.Currency, "paid_at": orderRow.PaidAt}
+	} else if !ent.IsNotFound(err) {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to load the advertising payment.")
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func updateSubmission(c *gin.Context, deps Dependencies) {
@@ -383,6 +408,15 @@ func updateSubmission(c *gin.Context, deps Dependencies) {
 	row, err := deps.Ent.Submission.Get(c.Request.Context(), *session.SubmissionID)
 	if err != nil || row.Status != submission.StatusNeedsChanges {
 		writeError(c, http.StatusConflict, "invalid_state", "The submission is not awaiting changes.")
+		return
+	}
+	duplicate, err := deps.Ent.Submission.Query().Where(submission.IDNEQ(row.ID), submission.NormalizedRegistrableDomainEQ(normalized.RegistrableDomain), submission.StatusIn(submission.StatusReceived, submission.StatusNeedsChanges, submission.StatusPreapproved, submission.StatusExchangeVerification, submission.StatusAwaitingPayment, submission.StatusPaid)).Exist(c.Request.Context())
+	if err != nil {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to validate the submission changes.")
+		return
+	}
+	if duplicate {
+		writeError(c, http.StatusConflict, "duplicate_submission", "Another active submission already uses this registrable domain.")
 		return
 	}
 	var backlinkURL *string
@@ -457,7 +491,13 @@ func updateAdApplication(c *gin.Context, deps Dependencies) {
 		return
 	}
 	defer func() { _ = tx.Rollback() }()
-	changed, err := tx.AdApplication.Update().Where(adapplication.IDEQ(row.ID), adapplication.StatusEQ(adapplication.StatusNeedsChanges)).SetStatus(adapplication.StatusReceived).SetTargetURL(target.URL).SetRequestedLocales(locales).SetRawTitle(strings.TrimSpace(request.Title)).SetRawDescription(strings.TrimSpace(request.Description)).SetNillableSourceImageURL(sourceImageURL).SetReviewNote("").Save(c.Request.Context())
+	updater := tx.AdApplication.Update().Where(adapplication.IDEQ(row.ID), adapplication.StatusEQ(adapplication.StatusNeedsChanges)).SetStatus(adapplication.StatusReceived).SetTargetURL(target.URL).SetRequestedLocales(locales).SetRawTitle(strings.TrimSpace(request.Title)).SetRawDescription(strings.TrimSpace(request.Description)).SetReviewNote("")
+	if sourceImageURL == nil {
+		updater.ClearSourceImageURL()
+	} else {
+		updater.SetSourceImageURL(*sourceImageURL)
+	}
+	changed, err := updater.Save(c.Request.Context())
 	if err != nil || changed != 1 {
 		writeError(c, http.StatusConflict, "concurrent_update", "The advertising application changed while it was being updated.")
 		return
@@ -522,6 +562,9 @@ func authenticateApplicationSession(c *gin.Context, deps Dependencies, subjectTy
 }
 
 func createApplicationOutbox(c *gin.Context, deps Dependencies, tx *ent.Tx, kind string, resourceID int, localeCode, email string, payload notificationPayload) error {
+	if deps.PayloadSealer == nil {
+		return errors.New("notification payload sealer is unavailable")
+	}
 	baseKey := strings.ReplaceAll(kind, ".", ":") + ":" + strconv.Itoa(resourceID) + ":" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	emailKey := baseKey + ":email"
 	encrypted, err := deps.PayloadSealer.Seal(payload, emailKey)
@@ -608,6 +651,9 @@ func applicationCookieName(deps Dependencies, subjectType string) string {
 	return developmentSubmissionCookie
 }
 
-func statusETag(resourceType string, id int, updatedAt time.Time) string {
-	return fmt.Sprintf(`W/"%s-%d-%d"`, resourceType, id, updatedAt.UnixNano())
+func limitRequestBody(limit int64) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
+		c.Next()
+	}
 }

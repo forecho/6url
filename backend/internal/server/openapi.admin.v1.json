@@ -70,6 +70,20 @@
           "height": { "type": "integer", "minimum": 1 },
           "album": { "type": "string", "const": "6url" }
         }
+      },
+      "PublishSubmissionRequest": {
+        "type": "object",
+        "required": ["slug", "localizations"],
+        "properties": {
+          "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "logo_asset_id": { "type": ["integer", "null"] },
+          "localizations": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": { "$ref": "#/components/schemas/ManualSiteLocalization" }
+          }
+        }
       }
     }
   },
@@ -137,6 +151,9 @@
     "/admin/v1/submissions/{id}/reject": {
       "post": { "operationId": "rejectSubmission", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReviewRequest" } } } }, "responses": { "200": { "description": "Submission rejected" } } }
     },
+    "/admin/v1/submissions/{id}/publish": {
+      "post": { "operationId": "publishSubmission", "description": "Atomically publishes four localized revisions, the site, commercial placement, audit log, notification and frontend revalidation job. Exchange submissions run SSRF-safe backlink verification before the transaction.", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishSubmissionRequest" } } } }, "responses": { "200": { "description": "Submission published" }, "409": { "description": "Submission or payment state is not publishable" }, "422": { "description": "Exchange backlink verification failed" } } }
+    },
     "/admin/v1/ad-applications": {
       "get": { "operationId": "listAdApplications", "responses": { "200": { "description": "Sponsor advertising application queue" } } }
     },
@@ -154,6 +171,9 @@
     },
     "/admin/v1/ads/manual": {
       "post": { "operationId": "createManualSponsorAd", "description": "Creates a free administrator-owned draft sponsor ad without an application or payment order.", "responses": { "201": { "description": "Draft sponsor ad created" } } }
+    },
+    "/admin/v1/placements/{id}/recheck": {
+      "post": { "operationId": "recheckExchangePlacement", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Backlink checked and placement health updated" }, "404": { "description": "Exchange placement not found" } } }
     },
     "/admin/v1/ads": {
       "get": { "operationId": "listAds", "responses": { "200": { "description": "Sponsor advertisements" } } }

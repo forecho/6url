@@ -96,12 +96,27 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusBadRequest, "invalid_webhook", "The Stripe webhook payload is invalid.")
 		return
 	}
-	if exists, _ := deps.Ent.PaymentEvent.Query().Where(paymentevent.EventIDEQ(event.ID)).Exist(c.Request.Context()); exists {
+	exists, err := deps.Ent.PaymentEvent.Query().Where(paymentevent.EventIDEQ(event.ID)).Exist(c.Request.Context())
+	if err != nil {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to check the Stripe webhook event.")
+		return
+	}
+	if exists {
 		c.JSON(http.StatusOK, gin.H{"received": true})
 		return
 	}
 	digest := sha256.Sum256(payload)
-	if event.Type != "checkout.session.completed" || event.Data.Object.PaymentStatus != "paid" {
+	paidEvent := (event.Type == "checkout.session.completed" || event.Type == "checkout.session.async_payment_succeeded") && event.Data.Object.PaymentStatus == "paid"
+	retryEvent := event.Type == "checkout.session.expired" || event.Type == "checkout.session.async_payment_failed"
+	if retryEvent {
+		if err := resetStripeCheckout(c, deps, event, digest); err != nil {
+			writeError(c, http.StatusBadRequest, "order_mismatch", "The Stripe Checkout session could not be reset for retry.")
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"received": true})
+		return
+	}
+	if !paidEvent {
 		if _, err := deps.Ent.PaymentEvent.Create().SetProvider("stripe").SetEventID(event.ID).SetType(event.Type).SetPayloadEncryptedOrRedacted("sha256:" + hex.EncodeToString(digest[:])).SetReceivedAt(time.Now()).SetProcessedAt(time.Now()).Save(c.Request.Context()); err != nil && !ent.IsConstraintError(err) {
 			writeError(c, http.StatusInternalServerError, "internal_error", "Unable to record the Stripe webhook.")
 			return
@@ -138,7 +153,11 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		return
 	}
 	if order.Status == paymentorder.StatusPaid {
-		_, _ = tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(time.Now()).Save(c.Request.Context())
+		changed, err := tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(time.Now()).Save(c.Request.Context())
+		if err != nil || changed != 1 {
+			writeError(c, http.StatusInternalServerError, "internal_error", "Unable to finish the Stripe webhook event.")
+			return
+		}
 		if err := tx.Commit(); err != nil {
 			writeError(c, http.StatusInternalServerError, "internal_error", "Unable to finish the Stripe webhook.")
 			return
@@ -155,12 +174,49 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to mark the application as paid.")
 		return
 	}
-	_, _ = tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(time.Now()).Save(c.Request.Context())
+	changed, err = tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(time.Now()).Save(c.Request.Context())
+	if err != nil || changed != 1 {
+		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to finish the Stripe webhook event.")
+		return
+	}
 	if err := tx.Commit(); err != nil {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to process the Stripe webhook.")
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"received": true})
+}
+
+func resetStripeCheckout(c *gin.Context, deps Dependencies, event stripeEvent, digest [32]byte) error {
+	orderID, err := strconv.Atoi(event.Data.Object.Metadata["order_id"])
+	if err != nil || orderID <= 0 {
+		return errors.New("invalid order reference")
+	}
+	tx, err := deps.Ent.Tx(c.Request.Context())
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if _, err := tx.PaymentEvent.Create().SetProvider("stripe").SetEventID(event.ID).SetType(event.Type).SetPayloadEncryptedOrRedacted("sha256:" + hex.EncodeToString(digest[:])).SetReceivedAt(time.Now()).SetProcessingStartedAt(time.Now()).Save(c.Request.Context()); err != nil {
+		if ent.IsConstraintError(err) {
+			return nil
+		}
+		return err
+	}
+	order, err := tx.PaymentOrder.Get(c.Request.Context(), orderID)
+	if err != nil || order.StripeCheckoutSessionID == nil || *order.StripeCheckoutSessionID != event.Data.Object.ID || order.Livemode != event.Data.Object.Livemode {
+		return errors.New("checkout order mismatch")
+	}
+	if order.Status == paymentorder.StatusProcessing {
+		changed, err := tx.PaymentOrder.Update().Where(paymentorder.IDEQ(order.ID), paymentorder.StatusEQ(paymentorder.StatusProcessing)).SetStatus(paymentorder.StatusPending).ClearStripeCheckoutSessionID().Save(c.Request.Context())
+		if err != nil || changed != 1 {
+			return errors.New("checkout order changed")
+		}
+	}
+	changed, err := tx.PaymentEvent.Update().Where(paymentevent.EventIDEQ(event.ID)).SetProcessedAt(time.Now()).Save(c.Request.Context())
+	if err != nil || changed != 1 {
+		return errors.New("payment event completion failed")
+	}
+	return tx.Commit()
 }
 
 func markApplicationPaid(c *gin.Context, deps Dependencies, tx *ent.Tx, order *ent.PaymentOrder) error {

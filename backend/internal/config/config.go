@@ -59,6 +59,8 @@ type Config struct {
 	ImgAntAllowedHosts        []string
 	ImgAntAlbum               string
 	NotificationEncryptionKey string
+	RevalidationWebhookURL    string
+	RevalidationSecret        string
 }
 
 func Load() Config {
@@ -103,6 +105,8 @@ func Load() Config {
 		ImgAntAllowedHosts:        csvEnv("IMGANT_ALLOWED_HOSTS", "cdn.imgant.com"),
 		ImgAntAlbum:               env("IMGANT_ALBUM", "6url"),
 		NotificationEncryptionKey: env("NOTIFICATION_ENCRYPTION_KEY", ""),
+		RevalidationWebhookURL:    env("REVALIDATION_WEBHOOK_URL", ""),
+		RevalidationSecret:        env("REVALIDATION_SECRET", ""),
 	}
 }
 
@@ -170,6 +174,9 @@ func (c Config) Validate() error {
 		}
 		if c.StripeListingAmount <= 0 || c.StripeAdAmount <= 0 || c.StripeAdDays <= 0 || c.StripeListingDays < 0 {
 			return errors.New("Stripe product snapshots are invalid")
+		}
+		if c.RevalidationWebhookURL != "https://6url.net/api/internal/revalidate" || len(c.RevalidationSecret) < 32 {
+			return errors.New("frontend revalidation configuration is incomplete")
 		}
 	}
 	return nil

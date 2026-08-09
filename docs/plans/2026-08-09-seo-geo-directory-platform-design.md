@@ -2011,9 +2011,19 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 
 ### 29.4 下一批实现
 
-- 内容 preview / commit、ETag 更新、发布事务与 revalidation outbox Worker。
+- 通用内容 preview / commit、ETag 更新与分类编辑发布流程。
 - Exchange 首次反链验证、每日定时复查、连续失败暂停和申请人主动 recheck。
 - Stripe 异步支付、Session 过期、退款和人工付款 / 退款管理 API。
 - Sponsor 用户付款后的广告内容发布、管理员广告启停 / 排序 / 到期操作和现有 4 个广告迁移。
 - 四语言公开路由、详情页、hreflang、sitemap、JSON-LD、GEO 来源和索引发布门槛。
 - 简单管理后台页面；后端 API 继续作为后台与本地 AI 的统一业务入口。
+
+### 29.5 发布与反链闭环进度
+
+- 完成目录申请发布 API：四语言 approved revision、publication 指针、site、category、paid / exchange placement、订单 site 绑定、管理员审计、申请人通知与 revalidation job 在同一事务提交。
+- Paid submission 仅允许已付款订单发布；Exchange submission 在事务前执行 SSRF-safe 首次反链检查并将通过结果写入历史。
+- 反链检查器禁用环境代理，拒绝私网、回环、链路本地、CGNAT、文档与保留地址；每次重定向重新解析并限制为 5 次，HTML 响应限制为 2 MiB。
+- 自然品牌链接与 `nofollow` 均视为有效；连续三次 missing / blocked 或一次 unsafe 会暂停 exchange placement，通过复查后自动恢复因反链失败产生的暂停。
+- 完成申请人限流 recheck、管理员 placement recheck 与每日到期扫描 Worker；所有检查保存状态、HTTP 信息、匹配链接、rel、重定向链和错误码。
+- 完成支付审查修复：支持 Stripe 异步成功、Session 过期与异步失败后的 Checkout 重试，并强制 PaymentEvent 完成标记参与事务成功条件。
+- 完成 revalidation outbox Worker 与 Next.js `/api/internal/revalidate`：请求使用 HMAC-SHA256、5 分钟时间窗、event ID 短期防重放、路径允许规则、条件 claim、stale 恢复与指数退避。

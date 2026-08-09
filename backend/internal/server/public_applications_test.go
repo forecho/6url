@@ -74,3 +74,18 @@ func TestSubmissionCreationAndStatusSession(t *testing.T) {
 		t.Fatalf("status=%d body=%s", statusResponse.Code, statusResponse.Body.String())
 	}
 }
+
+func TestSubmissionRequestBodyLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	client := enttest.Open(t, dialect.SQLite, "file:submission-limit?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+	sealer, _ := securepayload.New(base64.StdEncoding.EncodeToString(make([]byte, 32)))
+	router := New(Dependencies{Config: config.Config{GinMode: gin.TestMode, AppBaseURL: "https://6url.net", CORSAllowedOrigins: []string{"https://6url.net"}, ApplicationTokenPepper: "01234567890123456789012345678901"}, Ent: client, Turnstile: acceptingTurnstile{}, PayloadSealer: &sealer})
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/submissions", strings.NewReader(`{"padding":"`+strings.Repeat("x", 70<<10)+`"}`))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest || client.Submission.Query().CountX(context.Background()) != 0 {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+}

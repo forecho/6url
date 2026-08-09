@@ -38,6 +38,8 @@ GET /admin/v1/openapi.json
 
 Public applications use Cloudflare Turnstile and Redis rate limiting. Status links carry their raw token in the URL fragment, exchange it for a 30-minute HttpOnly cookie, and require Origin plus `X-CSRF-Token` on status mutations and Checkout creation. Run the API process continuously so its durable notification worker can deliver UnoSend or Sendflare email and Slack outbox rows.
 
+Published submissions enqueue signed frontend revalidation jobs. Configure the same secret as backend `REVALIDATION_SECRET` and frontend `SIXURL_REVALIDATION_SECRET`; the backend worker calls `REVALIDATION_WEBHOOK_URL` until Next.js confirms the affected paths were revalidated.
+
 Import the current JSON catalog as Chinese drafts with active editorial placements:
 
 ```bash

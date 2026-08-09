@@ -16,6 +16,7 @@ import (
 
 	"github.com/forecho/6url/backend/ent"
 	"github.com/forecho/6url/backend/ent/locale"
+	"github.com/forecho/6url/backend/internal/backlink"
 	"github.com/forecho/6url/backend/internal/catalog"
 	"github.com/forecho/6url/backend/internal/config"
 	"github.com/forecho/6url/backend/internal/ratelimit"
@@ -36,6 +37,7 @@ type Dependencies struct {
 	RateLimiter   ratelimit.Limiter
 	PayloadSealer *securepayload.Sealer
 	Stripe        StripeCheckout
+	Backlinks     backlink.Checker
 }
 
 func New(deps Dependencies) *gin.Engine {
@@ -58,6 +60,9 @@ func New(deps Dependencies) *gin.Engine {
 	}
 	if deps.Stripe == nil {
 		deps.Stripe = stripeclient.Client{SecretKey: deps.Config.StripeSecretKey}
+	}
+	if deps.Backlinks == nil {
+		deps.Backlinks = backlink.Client{}
 	}
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     deps.Config.CORSAllowedOrigins,
