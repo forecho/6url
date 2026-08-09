@@ -537,8 +537,8 @@ received
 1. 编辑预审通过。
 2. 系统创建 order，保存套餐名称、价格、币种、期限和权益快照。
 3. 后端创建 Stripe Checkout Session。
-4. Stripe webhook 验签并按 event ID 幂等处理 `checkout.session.completed`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`、`checkout.session.expired` 和退款事件。
-5. 每个事件校验 metadata 中的 order ID，以及预期 Price ID、金额、币种、livemode、Checkout Session 和 PaymentIntent 归属；只有 Stripe 明确确认 paid 后才把 order 标记为 `paid`。
+4. Stripe webhook 验签并按 event ID 幂等处理 `checkout.session.completed`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`、`checkout.session.expired`、`refund.created`、`refund.updated`、`refund.failed` 和 `charge.refund.updated`；其余事件返回 200 ignored 且不写事件表。
+5. 6URL 与其他产品共享 Stripe 账号，每个新 Checkout Session、PaymentIntent 和 Refund 写入 `sixurl_app=6url.net` 与 `sixurl_order_id`。Webhook 通过专属 metadata 加本地 Checkout Session / PaymentIntent 双重归属校验；历史 Checkout 使用已保存的 Session ID 兼容，其他产品事件返回 200 ignored。归属确认后继续校验金额、币种、livemode、Checkout Session 和 PaymentIntent，只有 Stripe 明确确认 paid 后才把 order 标记为 `paid`。
 6. 创建或更新标准收录的 paid placement，设置 `starts_at`；固定期限套餐同时设置 `ends_at`，永久收录保持为空。
 7. 发布页面并发送收据与状态链接。
 8. 固定期限套餐在到期前 30、7、1 天发送提醒。
@@ -1530,9 +1530,11 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 ### 16.3 支付
 
 - Stripe webhook 使用签名验证。
+- 共享 Stripe 账号为 6URL 配置独立 webhook endpoint 与 signing secret，并只订阅 Checkout 生命周期和退款事件。
 - event ID 唯一约束保证幂等。
 - order 状态转换使用事务和条件更新。
-- webhook 校验 order ID、Price ID、金额、币种、livemode、Session 和 PaymentIntent 归属，并覆盖同步、异步、过期和退款事件。
+- webhook 使用 `sixurl_app=6url.net`、`sixurl_order_id` 和本地 Session / PaymentIntent 隔离其他产品，再校验订单金额、币种、livemode 与支付对象归属，并覆盖同步、异步、过期和退款事件。
+- 其他产品和不支持的 Stripe 事件返回 200 ignored，不写 `payment_events`，避免共享账号产生重试与数据污染。
 - paid 状态是 placement 激活前置条件；首版退款只接受全额退款。
 - 日志记录订单 ID 和事件 ID，不记录密钥和完整支付资料。
 - 退款和人工付款需要操作原因。
@@ -2024,6 +2026,7 @@ Next.js 使用 ImgAnt 允许的图片 host 和图片变换参数生成响应式�
 - 自然品牌链接与 `nofollow` 均视为有效；连续三次 missing / blocked 或一次 unsafe 会暂停 exchange placement，通过复查后自动恢复因反链失败产生的暂停。
 - 完成申请人限流 recheck、管理员 placement recheck 与每日到期扫描 Worker；所有检查保存状态、HTTP 信息、匹配链接、rel、重定向链和错误码。
 - 完成支付审查修复：支持 Stripe 异步成功、Session 过期与异步失败后的 Checkout 重试，并强制 PaymentEvent 完成标记参与事务成功条件。
+- 完成共享 Stripe 账号隔离：Checkout、PaymentIntent 和 Refund 写入 6URL 专属 metadata；Webhook 以 metadata、本地 Session 和 PaymentIntent 判断事件归属，兼容旧 Checkout，并忽略其他产品和不支持的事件。
 - 完成 revalidation outbox Worker 与 Next.js `/api/internal/revalidate`：请求使用 HMAC-SHA256、5 分钟时间窗、event ID 短期防重放、路径允许规则、条件 claim、stale 恢复与指数退避。
 
 ### 29.6 Sponsor 与退款闭环进度

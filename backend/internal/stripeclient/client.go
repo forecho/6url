@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+const MetadataAppValue = "6url.net"
+
 type Client struct {
 	SecretKey string
 	BaseURL   string
@@ -59,15 +61,19 @@ func (c Client) CreateCheckout(ctx context.Context, input CheckoutRequest) (Chec
 		baseURL = "https://api.stripe.com"
 	}
 	form := url.Values{
-		"mode":                                    {"payment"},
-		"line_items[0][price]":                    {input.PriceID},
-		"line_items[0][quantity]":                 {"1"},
-		"client_reference_id":                     {strconv.Itoa(input.OrderID)},
-		"metadata[order_id]":                      {strconv.Itoa(input.OrderID)},
-		"payment_intent_data[metadata][order_id]": {strconv.Itoa(input.OrderID)},
-		"customer_email":                          {input.CustomerEmail},
-		"success_url":                             {input.SuccessURL},
-		"cancel_url":                              {input.CancelURL},
+		"mode":                                           {"payment"},
+		"line_items[0][price]":                           {input.PriceID},
+		"line_items[0][quantity]":                        {"1"},
+		"client_reference_id":                            {strconv.Itoa(input.OrderID)},
+		"metadata[order_id]":                             {strconv.Itoa(input.OrderID)},
+		"metadata[sixurl_app]":                           {MetadataAppValue},
+		"metadata[sixurl_order_id]":                      {strconv.Itoa(input.OrderID)},
+		"payment_intent_data[metadata][order_id]":        {strconv.Itoa(input.OrderID)},
+		"payment_intent_data[metadata][sixurl_app]":      {MetadataAppValue},
+		"payment_intent_data[metadata][sixurl_order_id]": {strconv.Itoa(input.OrderID)},
+		"customer_email":                                 {input.CustomerEmail},
+		"success_url":                                    {input.SuccessURL},
+		"cancel_url":                                     {input.CancelURL},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/v1/checkout/sessions", strings.NewReader(form.Encode()))
 	if err != nil {
@@ -108,10 +114,12 @@ func (c Client) Refund(ctx context.Context, input RefundRequest) (Refund, error)
 		baseURL = "https://api.stripe.com"
 	}
 	form := url.Values{
-		"payment_intent":         {input.PaymentIntentID},
-		"amount":                 {strconv.FormatInt(input.AmountMinor, 10)},
-		"metadata[order_id]":     {strconv.Itoa(input.OrderID)},
-		"metadata[refund_scope]": {"full"},
+		"payment_intent":            {input.PaymentIntentID},
+		"amount":                    {strconv.FormatInt(input.AmountMinor, 10)},
+		"metadata[order_id]":        {strconv.Itoa(input.OrderID)},
+		"metadata[sixurl_app]":      {MetadataAppValue},
+		"metadata[sixurl_order_id]": {strconv.Itoa(input.OrderID)},
+		"metadata[refund_scope]":    {"full"},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/v1/refunds", strings.NewReader(form.Encode()))
 	if err != nil {

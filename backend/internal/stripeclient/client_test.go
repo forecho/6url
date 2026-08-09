@@ -21,7 +21,7 @@ func TestRefundSendsExplicitFullAmountAndIdempotencyKey(t *testing.T) {
 		}
 		body, _ := io.ReadAll(r.Body)
 		form, _ := url.ParseQuery(string(body))
-		if form.Get("payment_intent") != "pi_123" || form.Get("amount") != "2500" || form.Get("metadata[order_id]") != "42" || r.Header.Get("Idempotency-Key") != "refund-key-123" {
+		if form.Get("payment_intent") != "pi_123" || form.Get("amount") != "2500" || form.Get("metadata[order_id]") != "42" || form.Get("metadata[sixurl_app]") != MetadataAppValue || form.Get("metadata[sixurl_order_id]") != "42" || r.Header.Get("Idempotency-Key") != "refund-key-123" {
 			t.Fatalf("unexpected refund request: form=%v key=%q", form, r.Header.Get("Idempotency-Key"))
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -34,6 +34,32 @@ func TestRefundSendsExplicitFullAmountAndIdempotencyKey(t *testing.T) {
 	}
 	if refund.ID != "re_123" || refund.Status != "succeeded" {
 		t.Fatalf("unexpected refund: %#v", refund)
+	}
+}
+
+func TestCreateCheckoutAddsSixURLMetadata(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/checkout/sessions" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		body, _ := io.ReadAll(r.Body)
+		form, _ := url.ParseQuery(string(body))
+		if form.Get("metadata[order_id]") != "42" || form.Get("metadata[sixurl_app]") != MetadataAppValue || form.Get("metadata[sixurl_order_id]") != "42" {
+			t.Fatalf("unexpected Checkout metadata: %v", form)
+		}
+		if form.Get("payment_intent_data[metadata][order_id]") != "42" || form.Get("payment_intent_data[metadata][sixurl_app]") != MetadataAppValue || form.Get("payment_intent_data[metadata][sixurl_order_id]") != "42" {
+			t.Fatalf("unexpected PaymentIntent metadata: %v", form)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"cs_123","url":"https://checkout.stripe.com/c/pay/cs_123"}`))
+	}))
+	defer server.Close()
+	session, err := (Client{SecretKey: "sk_test", BaseURL: server.URL, HTTP: server.Client()}).CreateCheckout(context.Background(), CheckoutRequest{OrderID: 42, PriceID: "price_123", CustomerEmail: "owner@example.com", SuccessURL: "https://6url.net/success", CancelURL: "https://6url.net/cancel"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if session.ID != "cs_123" {
+		t.Fatalf("unexpected Checkout session: %#v", session)
 	}
 }
 

@@ -21,7 +21,11 @@ import (
 	"github.com/forecho/6url/backend/internal/stripeclient"
 )
 
-var errRefundWebhookMismatch = errors.New("refund webhook mismatch")
+var (
+	errStripeEventNotOwned     = errors.New("Stripe event does not belong to 6URL")
+	errCheckoutWebhookMismatch = errors.New("checkout webhook mismatch")
+	errRefundWebhookMismatch   = errors.New("refund webhook mismatch")
+)
 
 func createCheckout(c *gin.Context, deps Dependencies, subjectType string) {
 	session, ok := authenticateApplicationSession(c, deps, subjectType)
@@ -101,6 +105,10 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		writeError(c, http.StatusBadRequest, "invalid_webhook", "The Stripe webhook payload is invalid.")
 		return
 	}
+	if !isSupportedStripeEvent(event.Type) {
+		writeIgnoredStripeEvent(c)
+		return
+	}
 	exists, err := deps.Ent.PaymentEvent.Query().Where(paymentevent.EventIDEQ(event.ID)).Exist(c.Request.Context())
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "internal_error", "Unable to check the Stripe webhook event.")
@@ -113,7 +121,9 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 	digest := sha256.Sum256(payload)
 	if event.Type == "refund.created" || event.Type == "refund.updated" || event.Type == "refund.failed" || event.Type == "charge.refund.updated" {
 		if err := processRefundWebhook(c, deps, event, digest); err != nil {
-			if errors.Is(err, errRefundWebhookMismatch) {
+			if errors.Is(err, errStripeEventNotOwned) {
+				writeIgnoredStripeEvent(c)
+			} else if errors.Is(err, errRefundWebhookMismatch) {
 				writeError(c, http.StatusBadRequest, "refund_mismatch", "The Stripe refund event does not match a payment order.")
 			} else {
 				writeError(c, http.StatusInternalServerError, "internal_error", "Unable to process the Stripe refund event.")
@@ -123,10 +133,21 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 		c.JSON(http.StatusOK, gin.H{"received": true})
 		return
 	}
+	orderID, err := resolveStripeCheckoutOrderID(c, deps, event)
+	if err != nil {
+		if errors.Is(err, errStripeEventNotOwned) {
+			writeIgnoredStripeEvent(c)
+		} else if errors.Is(err, errCheckoutWebhookMismatch) {
+			writeError(c, http.StatusBadRequest, "order_mismatch", "The Stripe Checkout session does not match a payment order.")
+		} else {
+			writeError(c, http.StatusInternalServerError, "internal_error", "Unable to resolve the Stripe Checkout session.")
+		}
+		return
+	}
 	paidEvent := (event.Type == "checkout.session.completed" || event.Type == "checkout.session.async_payment_succeeded") && event.Data.Object.PaymentStatus == "paid"
 	retryEvent := event.Type == "checkout.session.expired" || event.Type == "checkout.session.async_payment_failed"
 	if retryEvent {
-		if err := resetStripeCheckout(c, deps, event, digest); err != nil {
+		if err := resetStripeCheckout(c, deps, event, orderID, digest); err != nil {
 			writeError(c, http.StatusBadRequest, "order_mismatch", "The Stripe Checkout session could not be reset for retry.")
 			return
 		}
@@ -139,11 +160,6 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"received": true})
-		return
-	}
-	orderID, err := strconv.Atoi(event.Data.Object.Metadata["order_id"])
-	if err != nil || orderID <= 0 {
-		writeError(c, http.StatusBadRequest, "invalid_webhook", "The Stripe Checkout session has no valid order reference.")
 		return
 	}
 	tx, err := deps.Ent.Tx(c.Request.Context())
@@ -203,9 +219,65 @@ func receiveStripeWebhook(c *gin.Context, deps Dependencies) {
 	c.JSON(http.StatusOK, gin.H{"received": true})
 }
 
+func isSupportedStripeEvent(eventType string) bool {
+	switch eventType {
+	case "checkout.session.completed",
+		"checkout.session.async_payment_succeeded",
+		"checkout.session.async_payment_failed",
+		"checkout.session.expired",
+		"refund.created",
+		"refund.updated",
+		"refund.failed",
+		"charge.refund.updated":
+		return true
+	default:
+		return false
+	}
+}
+
+func writeIgnoredStripeEvent(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"received": true, "ignored": true})
+}
+
+func resolveStripeCheckoutOrderID(c *gin.Context, deps Dependencies, event stripeEvent) (int, error) {
+	checkout := event.Data.Object
+	if checkout.ID == "" {
+		return 0, errCheckoutWebhookMismatch
+	}
+	appMarker, hasAppMarker := checkout.Metadata["sixurl_app"]
+	if hasAppMarker {
+		if appMarker != stripeclient.MetadataAppValue {
+			return 0, errStripeEventNotOwned
+		}
+		orderID, err := strconv.Atoi(checkout.Metadata["sixurl_order_id"])
+		if err != nil || orderID <= 0 {
+			return 0, errCheckoutWebhookMismatch
+		}
+		return orderID, nil
+	}
+	order, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.StripeCheckoutSessionIDEQ(checkout.ID)).Only(c.Request.Context())
+	if ent.IsNotFound(err) {
+		return 0, errStripeEventNotOwned
+	}
+	if err != nil {
+		return 0, err
+	}
+	return order.ID, nil
+}
+
 func processRefundWebhook(c *gin.Context, deps Dependencies, event stripeEvent, digest [32]byte) error {
 	refund := event.Data.Object
-	if refund.ID == "" || refund.PaymentIntent == "" || refund.Amount <= 0 || refund.Currency == "" || refund.Status == "" {
+	if refund.PaymentIntent == "" {
+		return errStripeEventNotOwned
+	}
+	ownedOrder, err := deps.Ent.PaymentOrder.Query().Where(paymentorder.StripePaymentIntentIDEQ(refund.PaymentIntent)).Only(c.Request.Context())
+	if ent.IsNotFound(err) {
+		return errStripeEventNotOwned
+	}
+	if err != nil {
+		return err
+	}
+	if refund.ID == "" || refund.Amount <= 0 || refund.Currency == "" || refund.Status == "" {
 		return errRefundWebhookMismatch
 	}
 	tx, err := deps.Ent.Tx(c.Request.Context())
@@ -219,10 +291,7 @@ func processRefundWebhook(c *gin.Context, deps Dependencies, event stripeEvent, 
 		}
 		return err
 	}
-	order, err := tx.PaymentOrder.Query().Where(paymentorder.StripePaymentIntentIDEQ(refund.PaymentIntent)).Only(c.Request.Context())
-	if ent.IsNotFound(err) {
-		return errRefundWebhookMismatch
-	}
+	order, err := tx.PaymentOrder.Get(c.Request.Context(), ownedOrder.ID)
 	if err != nil {
 		return err
 	}
@@ -278,11 +347,7 @@ func processRefundWebhook(c *gin.Context, deps Dependencies, event stripeEvent, 
 	return tx.Commit()
 }
 
-func resetStripeCheckout(c *gin.Context, deps Dependencies, event stripeEvent, digest [32]byte) error {
-	orderID, err := strconv.Atoi(event.Data.Object.Metadata["order_id"])
-	if err != nil || orderID <= 0 {
-		return errors.New("invalid order reference")
-	}
+func resetStripeCheckout(c *gin.Context, deps Dependencies, event stripeEvent, orderID int, digest [32]byte) error {
 	tx, err := deps.Ent.Tx(c.Request.Context())
 	if err != nil {
 		return err

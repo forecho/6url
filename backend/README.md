@@ -40,6 +40,23 @@ Public applications use Cloudflare Turnstile and Redis rate limiting. Status lin
 
 Published submissions enqueue signed frontend revalidation jobs. Configure the same secret as backend `REVALIDATION_SECRET` and frontend `SIXURL_REVALIDATION_SECRET`; the backend worker calls `REVALIDATION_WEBHOOK_URL` until Next.js confirms the affected paths were revalidated.
 
+## Stripe webhook isolation
+
+The Stripe account may serve multiple products. Create a dedicated webhook endpoint for 6URL, give it its own signing secret, and subscribe it only to these events:
+
+```text
+checkout.session.completed
+checkout.session.async_payment_succeeded
+checkout.session.async_payment_failed
+checkout.session.expired
+refund.created
+refund.updated
+refund.failed
+charge.refund.updated
+```
+
+6URL writes `sixurl_app=6url.net` and `sixurl_order_id` into Checkout Session, PaymentIntent and Refund metadata. The webhook also verifies the local Checkout Session or PaymentIntent before changing an order. Events owned by another product and event types outside the list receive HTTP 200 with `ignored=true` and are excluded from `payment_events`. Checkout Sessions created before this metadata was introduced remain compatible through their locally stored Stripe Session ID.
+
 Import the current JSON catalog as Chinese drafts with active editorial placements:
 
 ```bash
